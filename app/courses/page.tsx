@@ -1,17 +1,14 @@
-import { unstable_noStore } from "next/cache";
 import { getCoursesPublished, getHomepageSettings, getTeacherIdsExcludedFromPublicCourseLists, getUserById } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
 import { pickLocalizedText } from "@/lib/i18n/localized-field";
 import { CoursesPageGrid } from "@/components/courses/CoursesPageGrid";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 type Props = { searchParams: Promise<{ category?: string; teacher?: string }> };
 
 export default async function CoursesPage({ searchParams }: Props) {
-  unstable_noStore();
   const [locale, settings, { category: categorySlug, teacher: teacherId }] = await Promise.all([
     getLocaleFromCookie(),
     getHomepageSettings().catch(() => null),

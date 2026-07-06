@@ -2029,7 +2029,7 @@ async function getHomepageSettingsUncached(): Promise<HomepageSetting> {
 /** نفس الطلب (layout + metadata + الصفحة) يقرأ الإعدادات مرة واحدة فقط */
 export const getHomepageSettings = cache(getHomepageSettingsUncached);
 
-export async function listHomepageFaqs(): Promise<HomepageFaq[]> {
+async function listHomepageFaqsUncached(): Promise<HomepageFaq[]> {
   try {
     await ensureHomepageFaqTable();
     const rows = await sql`SELECT * FROM "HomepageFaq" ORDER BY sort_order ASC, created_at ASC`;
@@ -2050,6 +2050,9 @@ export async function listHomepageFaqs(): Promise<HomepageFaq[]> {
     }));
   }
 }
+
+/** نفس الطلب يقرأ الأسئلة الشائعة مرة واحدة فقط */
+export const listHomepageFaqs = cache(listHomepageFaqsUncached);
 
 export async function createHomepageFaq(data: {
   id: string;
@@ -3510,6 +3513,14 @@ export async function hasFullCourseAccessAsStudent(userId: string, courseId: str
 }
 
 export async function getLatestPlatformSubscriptionExpiry(userId: string): Promise<Date | null> {
+  const info = await getActivePlatformSubscriptionInfo(userId);
+  return info.expiresAt;
+}
+
+/** استعلام واحد بدل التحقق من النشاط ثم تاريخ الانتهاء */
+export async function getActivePlatformSubscriptionInfo(
+  userId: string,
+): Promise<{ active: boolean; expiresAt: Date | null }> {
   try {
     await ensurePlatformSubscriptionSchema();
     const rows = await sql`
@@ -3517,10 +3528,11 @@ export async function getLatestPlatformSubscriptionExpiry(userId: string): Promi
       WHERE user_id = ${userId} AND expires_at > NOW()
     `;
     const m = (rows[0] as { m?: Date | string | null } | undefined)?.m;
-    if (!m) return null;
-    return m instanceof Date ? m : new Date(String(m));
+    if (!m) return { active: false, expiresAt: null };
+    const expiresAt = m instanceof Date ? m : new Date(String(m));
+    return { active: true, expiresAt };
   } catch {
-    return null;
+    return { active: false, expiresAt: null };
   }
 }
 
@@ -3759,13 +3771,11 @@ export async function getPublishedCourseSlugsByIds(ids: string[]): Promise<Map<s
   const uniq = [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))];
   const map = new Map<string, string>();
   if (uniq.length === 0) return map;
-  const results = await Promise.all(
-    uniq.map((id) =>
-      sql`SELECT id, slug FROM "Course" WHERE id = ${id} AND is_published = true LIMIT 1`,
-    ),
-  );
-  for (const rows of results) {
-    const r = rows[0] as { id?: unknown; slug?: unknown } | undefined;
+  const rows = await sql`
+    SELECT id, slug FROM "Course"
+    WHERE id = ANY(${uniq}::text[]) AND is_published = true
+  `;
+  for (const r of rows as { id?: unknown; slug?: unknown }[]) {
     if (r?.id != null && r?.slug != null) {
       map.set(String(r.id), String(r.slug));
     }
@@ -4093,6 +4103,9 @@ export async function getCourseWithContent(segment: string): Promise<{
     quizzes,
   };
 }
+
+/** يمنع جلب الدورة مرتين في نفس الطلب (metadata + الصفحة) */
+export const getCourseWithContentCached = cache(getCourseWithContent);
 
 /** جلب دورة كاملة مع حصص واختبارات (أسئلة + خيارات) — لصفحة التعديل */
 export async function getCourseForEdit(courseId: string): Promise<{
@@ -5174,15 +5187,12 @@ export async function getStudentsEnrolledInTeacherCourses(teacherId: string): Pr
   return rows as User[];
 }
 
-export async function getEnrollmentsWithCourseByUserId(userId: string): Promise<Array<Enrollment & { course: { id: string; title: string; titleAr: string | null; slug: string } }>> {
-  const rows = await sql`
-    SELECT e.*, c.id as c_id, c.title as c_title, c.title_ar as c_title_ar, c.slug as c_slug
-    FROM "Enrollment" e
-    JOIN "Course" c ON c.id = e.course_id
-    WHERE e.user_id = ${userId}
-    ORDER BY e.enrolled_at DESC
-  `;
-  return (rows as Record<string, unknown>[]).map((r) => ({
+type EnrollmentWithCourse = Enrollment & {
+  course: { id: string; title: string; titleAr: string | null; slug: string };
+};
+
+function mapEnrollmentWithCourseRow(r: Record<string, unknown>): EnrollmentWithCourse {
+  return {
     id: r.id,
     user_id: r.user_id,
     course_id: r.course_id,
@@ -5193,7 +5203,42 @@ export async function getEnrollmentsWithCourseByUserId(userId: string): Promise<
       titleAr: r.c_title_ar,
       slug: r.c_slug,
     },
-  })) as Array<Enrollment & { course: { id: string; title: string; titleAr: string | null; slug: string } }>;
+  } as EnrollmentWithCourse;
+}
+
+export async function getEnrollmentsWithCourseByUserId(userId: string): Promise<EnrollmentWithCourse[]> {
+  const rows = await sql`
+    SELECT e.*, c.id as c_id, c.title as c_title, c.title_ar as c_title_ar, c.slug as c_slug
+    FROM "Enrollment" e
+    JOIN "Course" c ON c.id = e.course_id
+    WHERE e.user_id = ${userId}
+    ORDER BY e.enrolled_at DESC
+  `;
+  return (rows as Record<string, unknown>[]).map(mapEnrollmentWithCourseRow);
+}
+
+/** جلب تسجيلات عدة طلاب في استعلام واحد — بدل N استعلام */
+export async function getEnrollmentsWithCourseByUserIds(
+  userIds: string[],
+): Promise<Map<string, EnrollmentWithCourse[]>> {
+  const uniq = [...new Set(userIds.map((id) => String(id).trim()).filter(Boolean))];
+  const map = new Map<string, EnrollmentWithCourse[]>();
+  if (uniq.length === 0) return map;
+  for (const id of uniq) map.set(id, []);
+
+  const rows = await sql`
+    SELECT e.*, c.id as c_id, c.title as c_title, c.title_ar as c_title_ar, c.slug as c_slug
+    FROM "Enrollment" e
+    JOIN "Course" c ON c.id = e.course_id
+    WHERE e.user_id = ANY(${uniq}::text[])
+    ORDER BY e.enrolled_at DESC
+  `;
+  for (const r of rows as Record<string, unknown>[]) {
+    const uid = String(r.user_id ?? "");
+    const list = map.get(uid);
+    if (list) list.push(mapEnrollmentWithCourseRow(r));
+  }
+  return map;
 }
 
 /** دورات الطالب المسجّل فيها — بنفس شكل الكورسات في الصفحة الرئيسية (للعرض كبطاقات) */

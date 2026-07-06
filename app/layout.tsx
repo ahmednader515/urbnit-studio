@@ -10,8 +10,7 @@ import { ForceLogoutGuard } from "@/components/ForceLogoutGuard";
 import { authOptions } from "@/lib/auth";
 import {
   getHomepageSettings,
-  userHasActivePlatformSubscription,
-  getLatestPlatformSubscriptionExpiry,
+  getActivePlatformSubscriptionInfo,
 } from "@/lib/db";
 import { normalizeHeroHex } from "@/lib/hero-bg";
 import { getDir, makeTranslator } from "@/lib/i18n/core";
@@ -110,9 +109,8 @@ export default async function RootLayout({
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.role === "STUDENT" && session.user.id) {
-      const active = await userHasActivePlatformSubscription(session.user.id);
+      const { active, expiresAt: exp } = await getActivePlatformSubscriptionInfo(session.user.id);
       if (active) {
-        const exp = await getLatestPlatformSubscriptionExpiry(session.user.id);
         if (exp) {
           platformSubscriptionExpiryLabel = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-US", {
             weekday: "long",

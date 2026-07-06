@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import {
   getUsersByRole,
-  getEnrollmentsWithCourseByUserId,
+  getEnrollmentsWithCourseByUserIds,
   getAllQuizAttemptsForAdmin,
   getTotalPlatformEarnings,
   getStudentsEnrolledInTeacherCourses,
@@ -33,12 +33,12 @@ export default async function StatisticsPage() {
     ]);
     const myCourseIds = new Set(myCourses.map((row) => String((row as { id?: unknown }).id ?? "")));
 
-    const enrollmentsByUser = await Promise.all(
-      students.map(async (s) => {
-        const all = await getEnrollmentsWithCourseByUserId(s.id);
-        return all.filter((e) => myCourseIds.has(e.course.id));
-      }),
-    );
+    const enrollmentsMap = await getEnrollmentsWithCourseByUserIds(students.map((s) => s.id));
+
+    const enrollmentsByUser = students.map((s) => {
+      const all = enrollmentsMap.get(s.id) ?? [];
+      return all.filter((e) => myCourseIds.has(e.course.id));
+    });
 
     const totalEnrollments = enrollmentsByUser.reduce((sum, e) => sum + e.length, 0);
 
@@ -95,9 +95,9 @@ export default async function StatisticsPage() {
     getTotalPlatformEarnings(),
   ]);
 
-  const enrollmentsByUser = await Promise.all(
-    students.map((s) => getEnrollmentsWithCourseByUserId(s.id))
-  );
+  const enrollmentsMap = await getEnrollmentsWithCourseByUserIds(students.map((s) => s.id));
+
+  const enrollmentsByUser = students.map((s) => enrollmentsMap.get(s.id) ?? []);
 
   const totalEnrollments = enrollmentsByUser.reduce((sum, e) => sum + e.length, 0);
 

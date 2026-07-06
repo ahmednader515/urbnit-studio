@@ -1,4 +1,3 @@
-import { unstable_noStore } from "next/cache";
 import { getHomepageSettings, listHomepageFaqs } from "@/lib/db";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
 import { HomeHero } from "@/components/home/HomeHero";
@@ -8,11 +7,10 @@ import { HomeFacebookPromo } from "@/components/home/HomeFacebookPromo";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { HomeWhatsappFab } from "@/components/home/HomeWhatsappFab";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+/** إعادة توليد الصفحة كل دقيقة — أسرع من force-dynamic الكامل */
+export const revalidate = 60;
 
 export default async function HomePage() {
-  unstable_noStore();
   const [locale, settings, faqs] = await Promise.all([
     getLocaleFromCookie(),
     getHomepageSettings(),

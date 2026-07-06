@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { unstable_noStore } from "next/cache";
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
-  getCourseWithContent,
+  getCourseWithContentCached,
   getEnrollment,
   getAllowedLessonIdsForUserCourse,
   getAllowedQuizIdsForUserCourse,
@@ -21,9 +21,7 @@ import { pickLocalizedText } from "@/lib/i18n/localized-field";
 
 type Props = { params: Promise<{ slug: string }> };
 
-/** عدم التخزين المؤقت — دائماً التحقق من وجود الدورة (تجنب 404 للدورات المحذوفة) */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 function isCourseId(segment: string): boolean {
   return /^c[a-z0-9]{24}$/i.test(segment);
@@ -46,9 +44,8 @@ function normalizeSlugForUrl(s: string | null | undefined): string {
 export async function generateMetadata({ params }: Props) {
   const [t, locale] = await Promise.all([getServerTranslator(), getLocaleFromCookie()]);
   const { slug: segment } = await params;
-  unstable_noStore();
   const decoded = decodeSlug(segment);
-  const data = await getCourseWithContent(decoded);
+  const data = await getCourseWithContentCached(decoded);
   const course = data?.course;
   if (!course) return { title: t("courses.notFoundCourse", "Course not found") };
   const courseTitle = pickLocalizedText(
@@ -72,13 +69,15 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function CoursePage({ params }: Props) {
-  unstable_noStore();
-  const t = await getServerTranslator();
-  const locale = await getLocaleFromCookie();
-  const { slug: segment } = await params;
+  const [t, locale, session, homepageSettings, { slug: segment }] = await Promise.all([
+    getServerTranslator(),
+    getLocaleFromCookie(),
+    getServerSession(authOptions),
+    getHomepageSettings(),
+    params,
+  ]);
   const decoded = decodeSlug(segment);
-  const session = await getServerSession(authOptions);
-  let data: Awaited<ReturnType<typeof getCourseWithContent>> = null;
+  let data: Awaited<ReturnType<typeof getCourseWithContentCached>> = null;
   let isEnrolled = false;
   let allowedLessonIds: string[] = [];
   let allowedQuizIds: string[] = [];
@@ -87,7 +86,7 @@ export default async function CoursePage({ params }: Props) {
   let paidCourseCoveredBySubscription = false;
   let subscriptionExpiresAt: Date | null = null;
   try {
-    data = await getCourseWithContent(decoded);
+    data = await getCourseWithContentCached(decoded);
     if (data?.course && session?.user?.id && session.user.role === "STUDENT") {
       const [en, user, lessons, quizzes, fullAccess, subPaid] = await Promise.all([
         getEnrollment(session.user.id, data.course.id),
@@ -146,7 +145,7 @@ export default async function CoursePage({ params }: Props) {
   const coursePrice = Number((course as Record<string, unknown>).price) || 0;
 
   const liveStreams = canAccessContent ? await getLiveStreamsByCourseId(course.id) : [];
-  const homepageSettings = await getHomepageSettings();
+
   const formatStreamDate = (d: Date | string) => {
     const date = typeof d === "string" ? new Date(d) : d;
     return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
@@ -229,12 +228,14 @@ export default async function CoursePage({ params }: Props) {
         {/* محتوى الكورس */}
         <article className="order-1 lg:order-2">
           <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
-          <div className="aspect-video w-full bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-primary-light)]/30 flex items-center justify-center overflow-hidden">
+          <div className="aspect-video w-full relative bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-primary-light)]/30 flex items-center justify-center overflow-hidden">
             {(course as Record<string, unknown>).imageUrl ?? (course as Record<string, unknown>).image_url ? (
-              <img
+              <Image
                 src={String((course as Record<string, unknown>).imageUrl ?? (course as Record<string, unknown>).image_url)}
                 alt=""
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
               />
             ) : (
               <span className="text-6xl opacity-50">📚</span>

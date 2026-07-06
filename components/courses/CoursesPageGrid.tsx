@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
@@ -64,10 +65,15 @@ export function CoursesPageGrid({ courses }: { courses: CourseGridItem[] }) {
 
         return (
           <article key={course.id} className="flex flex-col overflow-hidden rounded-xl bg-white shadow-sm">
-            <div className="aspect-video bg-neutral-100">
+            <div className="relative aspect-video bg-neutral-100">
               {course.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={course.imageUrl} alt="" className="h-full w-full object-cover" />
+                <Image
+                  src={course.imageUrl}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
               ) : null}
             </div>
             <div className="flex flex-1 flex-col p-5">
