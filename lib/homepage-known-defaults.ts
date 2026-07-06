@@ -135,8 +135,8 @@ export const URBNIT_PACKS_PAGE_DESCRIPTION_EN =
 export const URBNIT_PACKS_PAGE_DESCRIPTION_AR =
   "طريقة فعّالة لتعزيز رسوماتك المعمارية! صُممت كل الحزم بعناية لتناسب احتياجات المعماري.";
 
-export const URBNIT_PAGE_TITLE_EN = "urbnit studio | Architectural Representation";
-export const URBNIT_PAGE_TITLE_AR = "urbnit studio | التمثيل المعماري";
+export const URBNIT_PAGE_TITLE_EN = "urbnit studio";
+export const URBNIT_PAGE_TITLE_AR = "urbnit studio";
 
 export const URBNIT_FOOTER_COPYRIGHT_EN = "urbnit studio. All rights reserved.";
 export const URBNIT_FOOTER_COPYRIGHT_AR = "urbnit studio. جميع الحقوق محفوظة.";

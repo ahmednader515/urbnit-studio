@@ -25,8 +25,12 @@ import {
   HOMEPAGE_DEFAULT_FOOTER_TITLE_AR,
 } from "@/lib/homepage-known-defaults";
 import { fontVariables } from "@/lib/fonts";
-import { resolveHeaderLogoUrl } from "@/lib/homepage-urbnit";
-import { URBNIT_DEFAULT_HEADER_LOGO } from "@/lib/homepage-known-defaults";
+import { resolveHeaderLogoUrl, resolvePageTitle } from "@/lib/homepage-urbnit";
+import {
+  URBNIT_DEFAULT_HEADER_LOGO,
+  URBNIT_PAGE_TITLE_AR,
+  URBNIT_PAGE_TITLE_EN,
+} from "@/lib/homepage-known-defaults";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -36,17 +40,14 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocaleFromCookie();
-  const defaultTitle =
-    locale === "ar"
-      ? "منصتي التعليمية | دورات وتعلم أونلاين"
-      : "My Learning Platform | Courses and Online Learning";
+  const defaultTitle = locale === "ar" ? URBNIT_PAGE_TITLE_AR : URBNIT_PAGE_TITLE_EN;
   const defaultDescription =
     locale === "ar"
-      ? "منصة تعليمية حديثة لدورات البرمجة والتصميم والتطوير"
-      : "A modern learning platform for programming, design, and development courses";
+      ? "منصة urbnit studio للتمثيل المعماري والتصور البصري"
+      : "urbnit studio — architectural representation and visualization";
   try {
     const settings = await getHomepageSettings();
-    const title = pickLocalizedText(locale, settings.pageTitle, settings.pageTitleEn) || defaultTitle;
+    const title = resolvePageTitle(locale, settings.pageTitle, settings.pageTitleEn);
     return { title, description: defaultDescription };
   } catch {
     return { title: defaultTitle, description: defaultDescription };
@@ -64,9 +65,9 @@ export default async function RootLayout({
   let platformName: string | null = null;
   let headerLogoUrl: string = URBNIT_DEFAULT_HEADER_LOGO;
   let platformPrimaryColor: string | null = null;
-  let footerTitle = t("footer.defaultTitle", "منصتي التعليمية");
-  let footerTagline = t("footer.defaultTagline", "تعلم بأسلوب حديث ومنهجية واضحة");
-  let footerCopyright = t("footer.defaultCopyright", "منصتي التعليمية. جميع الحقوق محفوظة.");
+  let footerTitle = t("footer.defaultTitle", "urbnit studio");
+  let footerTagline = t("footer.defaultTagline", "تعلّم التمثيل المعماري والتصور البصري");
+  let footerCopyright = t("footer.defaultCopyright", "urbnit studio. جميع الحقوق محفوظة.");
   let homepageSettings: Awaited<ReturnType<typeof getHomepageSettings>> | null = null;
   try {
     const settings = await getHomepageSettings();
@@ -83,7 +84,7 @@ export default async function RootLayout({
       HOMEPAGE_DEFAULT_FOOTER_TITLE_AR,
       "footer.defaultTitle",
       t,
-      "My Learning Platform",
+      "urbnit studio",
     );
     footerTagline = homepageDefaultForLocale(
       locale,
@@ -91,7 +92,7 @@ export default async function RootLayout({
       HOMEPAGE_DEFAULT_FOOTER_TAGLINE_AR,
       "footer.defaultTagline",
       t,
-      "Learn with a modern and clear method",
+      "Learn architectural representation and visualization",
     );
     footerCopyright = homepageDefaultForLocale(
       locale,
@@ -99,7 +100,7 @@ export default async function RootLayout({
       HOMEPAGE_DEFAULT_FOOTER_COPYRIGHT_AR,
       "footer.defaultCopyright",
       t,
-      "My Learning Platform. All rights reserved.",
+      "urbnit studio. All rights reserved.",
     );
   } catch {
     // استخدام الافتراضي في الهيدر والفوتر

@@ -51,9 +51,9 @@ export const arMessages: Messages = {
     switchToEn: "Switch to English",
   },
   footer: {
-    defaultTitle: "منصتي التعليمية",
-    defaultTagline: "تعلم بأسلوب حديث ومنهجية واضحة",
-    defaultCopyright: "منصتي التعليمية. جميع الحقوق محفوظة.",
+    defaultTitle: "urbnit studio",
+    defaultTagline: "تعلّم التمثيل المعماري والتصور البصري",
+    defaultCopyright: "urbnit studio. جميع الحقوق محفوظة.",
   },
   auth: {
     login: {

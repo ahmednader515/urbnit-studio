@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: Props) {
       null,
   );
   return {
-    title: `${courseTitle} | ${t("footer.defaultTitle", "My Learning Platform")}`,
+    title: `${courseTitle} | ${t("footer.defaultTitle", "urbnit studio")}`,
     description: courseDescription,
   };
 }

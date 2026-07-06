@@ -9,6 +9,8 @@ import {
   URBNIT_PACKS_PROMO_IMAGE,
   URBNIT_TOP_BANNER_IMAGES,
   URBNIT_WHATSAPP_SUPPORT_URL,
+  URBNIT_PAGE_TITLE_AR,
+  URBNIT_PAGE_TITLE_EN,
 } from "@/lib/homepage-known-defaults";
 
 export const PACK_CATEGORIES: { id: PackCategory; labelEn: string; labelAr: string }[] = [
@@ -82,6 +84,26 @@ export function toWhatsappHref(raw: string | null | undefined, fallback = URBNIT
 
 export function resolveWhatsappSupportUrl(raw: string | null | undefined): string {
   return toWhatsappHref(raw, URBNIT_WHATSAPP_SUPPORT_URL);
+}
+
+const LEGACY_PAGE_TITLES = new Set([
+  "منصتي التعليمية",
+  "منصتي التعليمية | دورات وتعلم أونلاين",
+  "My Learning Platform",
+  "My Learning Platform | Courses and Online Learning",
+  "urbnit studio | Architectural Representation",
+  "urbnit studio | التمثيل المعماري",
+]);
+
+export function resolvePageTitle(
+  locale: "ar" | "en",
+  pageTitle?: string | null,
+  pageTitleEn?: string | null,
+): string {
+  const raw = (locale === "ar" ? pageTitle : pageTitleEn)?.trim();
+  const fallback = locale === "ar" ? URBNIT_PAGE_TITLE_AR : URBNIT_PAGE_TITLE_EN;
+  if (!raw || LEGACY_PAGE_TITLES.has(raw)) return fallback;
+  return raw;
 }
 
 /** Show a friendly phone number in admin when the stored value is a wa.me link. */

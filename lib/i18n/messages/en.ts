@@ -51,9 +51,9 @@ export const enMessages: Messages = {
     switchToEn: "Switch to English",
   },
   footer: {
-    defaultTitle: "My Learning Platform",
-    defaultTagline: "Learn with a modern and clear method",
-    defaultCopyright: "My Learning Platform. All rights reserved.",
+    defaultTitle: "urbnit studio",
+    defaultTagline: "Learn architectural representation and visualization",
+    defaultCopyright: "urbnit studio. All rights reserved.",
   },
   auth: {
     login: {
