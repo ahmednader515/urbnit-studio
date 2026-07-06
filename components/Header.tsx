@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import type { UserRole } from "@/lib/types";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { PlatformSubscriptionBanner } from "@/components/PlatformSubscriptionBanner";
 import { useT, useLocalizedEnumValue } from "@/components/LocaleProvider";
 import { resolveHeaderLogoUrl } from "@/lib/homepage-urbnit";
 
@@ -75,12 +76,10 @@ function UserMenu() {
 export function Header({
   platformName,
   headerLogoUrl,
-  platformSubscriptionExpiryLabel,
   facebookUrl,
 }: {
   platformName?: string | null;
   headerLogoUrl?: string | null;
-  platformSubscriptionExpiryLabel?: string | null;
   facebookUrl?: string | null;
 }) {
   const { data: session, status } = useSession();
@@ -156,12 +155,7 @@ export function Header({
         </Link>
       </nav>
 
-      {platformSubscriptionExpiryLabel ? (
-        <div className="border-t border-teal-200 bg-teal-50 py-2 text-center text-xs text-teal-900">
-          {t("header.platformSubscriptionActive", "You are subscribed to the platform subscription")} —{" "}
-          {t("header.endsAt", "Expires at:")} {platformSubscriptionExpiryLabel}
-        </div>
-      ) : null}
+      <PlatformSubscriptionBanner />
     </header>
   );
 }

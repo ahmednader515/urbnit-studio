@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { cache } from "react";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { neon } from "@neondatabase/serverless";
 import type {
   User,
@@ -66,6 +67,10 @@ if (!connectionString) throw new Error("DATABASE_URL غير معرّف");
 
 /** عميل Neon — الاتصال المباشر بقاعدة البيانات Neon (بدون Prisma) */
 export const sql = neon(connectionString);
+
+function bustCache(...tags: string[]) {
+  for (const tag of tags) revalidateTag(tag, "max");
+}
 
 /**
  * Many pages call "ensure schema" helpers during render.
@@ -1509,22 +1514,24 @@ export async function getTeacherIdsExcludedFromPublicCourseLists(): Promise<Set<
 
 async function getHomepageSettingsUncached(): Promise<HomepageSetting> {
   try {
-    await ensureHomepageHeroTemplateColumns();
-    await ensureHomepageHeroSliderCourseIdColumns();
-    await ensureHomepageReviewsSectionCopyColumns();
-    await ensureHomepageHeroCustomBgColumns();
-    await ensureAddBalanceSettingsColumns();
-    await ensureHomepageStoreEnabledColumn();
-    await ensureHomepageStoreSectionCopyColumns();
-    await ensureHomepagePrimaryColorColumn();
-    await ensureHomepageHeaderLogoColumn();
-    await ensureHomepageTeamSupportLinksColumns();
-    await ensureHomepageCtaCopyColumns();
-    await ensureHomepageBilingualTextColumns();
-    await ensureHomepagePlatformDetailsColumns();
-    await ensureHomepagePlatformNewsColumns();
-    await ensureHomepageCopyrightOverlayColumns();
-    await ensureHomepageUrbnitColumns();
+    await Promise.all([
+      ensureHomepageHeroTemplateColumns(),
+      ensureHomepageHeroSliderCourseIdColumns(),
+      ensureHomepageReviewsSectionCopyColumns(),
+      ensureHomepageHeroCustomBgColumns(),
+      ensureAddBalanceSettingsColumns(),
+      ensureHomepageStoreEnabledColumn(),
+      ensureHomepageStoreSectionCopyColumns(),
+      ensureHomepagePrimaryColorColumn(),
+      ensureHomepageHeaderLogoColumn(),
+      ensureHomepageTeamSupportLinksColumns(),
+      ensureHomepageCtaCopyColumns(),
+      ensureHomepageBilingualTextColumns(),
+      ensureHomepagePlatformDetailsColumns(),
+      ensureHomepagePlatformNewsColumns(),
+      ensureHomepageCopyrightOverlayColumns(),
+      ensureHomepageUrbnitColumns(),
+    ]);
     const rows = await sql`SELECT * FROM "HomepageSetting" WHERE id = 'default' LIMIT 1`;
     const row = rows[0] as Record<string, unknown> | undefined;
     if (!row) return HOMEPAGE_DEFAULTS;
@@ -2026,8 +2033,14 @@ async function getHomepageSettingsUncached(): Promise<HomepageSetting> {
   }
 }
 
-/** نفس الطلب (layout + metadata + الصفحة) يقرأ الإعدادات مرة واحدة فقط */
-export const getHomepageSettings = cache(getHomepageSettingsUncached);
+const getHomepageSettingsDataCache = unstable_cache(
+  getHomepageSettingsUncached,
+  ["homepage-settings"],
+  { revalidate: 300, tags: ["homepage-settings"] },
+);
+
+/** نفس الطلب (layout + metadata + الصفحة) يقرأ الإعدادات مرة واحدة؛ مخزّن عبر الطلبات لمدة 5 دقائق */
+export const getHomepageSettings = cache(getHomepageSettingsDataCache);
 
 async function listHomepageFaqsUncached(): Promise<HomepageFaq[]> {
   try {
@@ -2051,8 +2064,14 @@ async function listHomepageFaqsUncached(): Promise<HomepageFaq[]> {
   }
 }
 
-/** نفس الطلب يقرأ الأسئلة الشائعة مرة واحدة فقط */
-export const listHomepageFaqs = cache(listHomepageFaqsUncached);
+const listHomepageFaqsDataCache = unstable_cache(
+  listHomepageFaqsUncached,
+  ["homepage-faqs"],
+  { revalidate: 300, tags: ["homepage-faqs"] },
+);
+
+/** نفس الطلب يقرأ الأسئلة الشائعة مرة واحدة؛ مخزّن عبر الطلبات */
+export const listHomepageFaqs = cache(listHomepageFaqsDataCache);
 
 export async function createHomepageFaq(data: {
   id: string;
@@ -2074,6 +2093,7 @@ export async function createHomepageFaq(data: {
       ${data.sort_order ?? 0}
     )
   `;
+  bustCache("homepage-faqs");
 }
 
 export async function updateHomepageFaq(
@@ -2103,11 +2123,13 @@ export async function updateHomepageFaq(
   if (data.sort_order !== undefined) {
     await sql`UPDATE "HomepageFaq" SET sort_order = ${data.sort_order}, updated_at = NOW() WHERE id = ${pid}`;
   }
+  bustCache("homepage-faqs");
 }
 
 export async function deleteHomepageFaq(id: string): Promise<void> {
   await ensureHomepageFaqTable();
   await sql`DELETE FROM "HomepageFaq" WHERE id = ${id.trim()}`;
+  bustCache("homepage-faqs");
 }
 
 function pickReviewsSectionString(
@@ -2837,6 +2859,7 @@ export async function updateHomepageSettings(data: {
         break;
     }
   }
+  bustCache("homepage-settings", "homepage-faqs", "teachers-homepage");
 }
 
 // ----- اشتراكات المنصة الشاملة (كل الدورات المدفوعة أثناء الاشتراك النشط) -----
@@ -3738,11 +3761,24 @@ export async function getCourseBySlugOrId(slugOrId: string): Promise<Course | nu
   return rowToCamel(rows[0] as Record<string, unknown>) as Course | null;
 }
 
-export async function getCoursesPublished(withCategory = true): Promise<(Course & { category?: Category })[]> {
-  await ensureLessonRatingsSchema();
+export async function getCoursesPublished(
+  withCategory = true,
+  withRatings = false,
+): Promise<(Course & { category?: Category })[]> {
+  return getCoursesPublishedDataCache(withCategory, withRatings);
+}
+
+async function getCoursesPublishedUncached(
+  withCategory: boolean,
+  withRatings: boolean,
+): Promise<(Course & { category?: Category })[]> {
+  if (withRatings) await ensureLessonRatingsSchema();
+  const ratingCols = withRatings
+    ? sql`, ${courseRatingSelectSql()}`
+    : sql``;
   if (!withCategory) {
     const rows = await sql`
-      SELECT c.*, ${courseRatingSelectSql()}
+      SELECT c.* ${ratingCols}
       FROM "Course" c
       WHERE c.is_published = true
       ORDER BY c."order" ASC, c.created_at DESC
@@ -3750,7 +3786,7 @@ export async function getCoursesPublished(withCategory = true): Promise<(Course 
     return rowsToCamel(rows as Record<string, unknown>[]) as (Course & { category?: Category })[];
   }
   const rows = await sql`
-    SELECT c.*, ${courseRatingSelectSql()}, cat.id as cat_id, cat.name as cat_name, cat.name_ar as cat_name_ar, cat.slug as cat_slug
+    SELECT c.* ${ratingCols}, cat.id as cat_id, cat.name as cat_name, cat.name_ar as cat_name_ar, cat.slug as cat_slug
     FROM "Course" c
     LEFT JOIN "Category" cat ON c.category_id = cat.id
     WHERE c.is_published = true
@@ -3765,6 +3801,12 @@ export async function getCoursesPublished(withCategory = true): Promise<(Course 
     return { ...base, category };
   }) as unknown as (Course & { category?: Category })[];
 }
+
+const getCoursesPublishedDataCache = unstable_cache(
+  getCoursesPublishedUncached,
+  ["courses-published"],
+  { revalidate: 120, tags: ["courses-published"] },
+);
 
 /** يعيد خريطة معرف كورس → slug للكورسات المنشورة فقط (لروابط السلايدر في الصفحة الرئيسية). */
 export async function getPublishedCourseSlugsByIds(ids: string[]): Promise<Map<string, string>> {
@@ -3957,6 +3999,7 @@ export async function createCourse(data: {
   const row = rows?.[0] as Record<string, unknown> | undefined;
   const c = row ? rowToCamel(row) as Course : null;
   if (!c) throw new Error("فشل إنشاء الدورة");
+  bustCache("courses-published");
   return c;
 }
 
@@ -4001,10 +4044,12 @@ export async function updateCourse(
   if (data.software_tools !== undefined) {
     await sql`UPDATE "Course" SET software_tools = ${data.software_tools}, updated_at = NOW() WHERE id = ${id}`;
   }
+  bustCache("courses-published", `course:${id}`);
 }
 
 export async function deleteCourse(id: string): Promise<void> {
   await sql`DELETE FROM "Course" WHERE id = ${id}`;
+  bustCache("courses-published");
 }
 
 // ----- Lesson -----
@@ -4104,8 +4149,15 @@ export async function getCourseWithContent(segment: string): Promise<{
   };
 }
 
-/** يمنع جلب الدورة مرتين في نفس الطلب (metadata + الصفحة) */
-export const getCourseWithContentCached = cache(getCourseWithContent);
+/** يمنع جلب الدورة مرتين في نفس الطلب؛ مخزّن عبر الطلبات لمدة دقيقتين */
+async function getCourseWithContentPersisted(segment: string) {
+  return unstable_cache(
+    () => getCourseWithContent(segment),
+    ["course-content", segment],
+    { revalidate: 120, tags: ["courses-published", `course:${segment}`] },
+  )();
+}
+export const getCourseWithContentCached = cache(getCourseWithContentPersisted);
 
 /** جلب دورة كاملة مع حصص واختبارات (أسئلة + خيارات) — لصفحة التعديل */
 export async function getCourseForEdit(courseId: string): Promise<{

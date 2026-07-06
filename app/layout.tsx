@@ -1,17 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import NextTopLoader from "nextjs-toploader";
-import { getServerSession } from "next-auth";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SessionProvider } from "@/components/SessionProvider";
-import { InspectGuard } from "@/components/InspectGuard";
+import { InspectGuardLazy } from "@/components/InspectGuardLazy";
 import { ForceLogoutGuard } from "@/components/ForceLogoutGuard";
-import { authOptions } from "@/lib/auth";
-import {
-  getHomepageSettings,
-  getActivePlatformSubscriptionInfo,
-} from "@/lib/db";
+import { getHomepageSettings } from "@/lib/db";
 import { normalizeHeroHex } from "@/lib/hero-bg";
 import { getDir, makeTranslator } from "@/lib/i18n/core";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
@@ -105,30 +100,6 @@ export default async function RootLayout({
     // استخدام الافتراضي في الهيدر والفوتر
   }
 
-  let platformSubscriptionExpiryLabel: string | null = null;
-  try {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role === "STUDENT" && session.user.id) {
-      const { active, expiresAt: exp } = await getActivePlatformSubscriptionInfo(session.user.id);
-      if (active) {
-        if (exp) {
-          platformSubscriptionExpiryLabel = new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).format(exp);
-        } else {
-          platformSubscriptionExpiryLabel = t("header.active", "نشط");
-        }
-      }
-    }
-  } catch {
-    platformSubscriptionExpiryLabel = null;
-  }
-
   return (
     <html lang={locale} dir={dir} className={fontVariables} suppressHydrationWarning>
       <head>
@@ -156,12 +127,11 @@ export default async function RootLayout({
         />
         <LocaleProvider locale={locale}>
           <SessionProvider>
-            <InspectGuard />
+            <InspectGuardLazy />
             <ForceLogoutGuard />
             <Header
               platformName={platformName}
               headerLogoUrl={headerLogoUrl}
-              platformSubscriptionExpiryLabel={platformSubscriptionExpiryLabel}
               facebookUrl={homepageSettings?.facebookUrl}
             />
             <main className="flex-1">{children}</main>

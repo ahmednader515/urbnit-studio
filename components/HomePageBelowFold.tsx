@@ -97,7 +97,7 @@ export async function HomePageBelowFold({
   }
 
   try {
-    [courses, categories] = await Promise.all([getCoursesPublished(true), getCategories()]);
+    [courses, categories] = await Promise.all([getCoursesPublished(true, true), getCategories()]);
   } catch {
     // لا قاعدة بيانات أو غير متصلة
   }
