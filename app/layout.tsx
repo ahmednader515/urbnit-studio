@@ -4,7 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SessionProvider } from "@/components/SessionProvider";
-import { InspectGuardLazy } from "@/components/InspectGuardLazy";
+import { DisableContextMenu } from "@/components/DisableContextMenu";
 import { ForceLogoutGuard } from "@/components/ForceLogoutGuard";
 import { getHomepageSettings } from "@/lib/db";
 import { normalizeHeroHex } from "@/lib/hero-bg";
@@ -127,7 +127,7 @@ export default async function RootLayout({
         />
         <LocaleProvider locale={locale}>
           <SessionProvider>
-            <InspectGuardLazy />
+            <DisableContextMenu />
             <ForceLogoutGuard />
             <Header
               platformName={platformName}
