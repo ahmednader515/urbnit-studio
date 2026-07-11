@@ -1,5 +1,6 @@
 import { getHomepageSettings, listHomepageFaqs } from "@/lib/db";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
+import { HomeTopBanner } from "@/components/home/HomeTopBanner";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeCoursesPromo } from "@/components/home/HomeCoursesPromo";
 import { HomePacksPromo } from "@/components/home/HomePacksPromo";
@@ -19,6 +20,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-white">
+      <HomeTopBanner settings={settings} />
       <HomeHero settings={settings} locale={locale} />
       <HomeCoursesPromo settings={settings} locale={locale} />
       <HomePacksPromo settings={settings} locale={locale} />

@@ -123,8 +123,8 @@ function ImageUrlField({
         placeholder="https://..."
       />
       <label className="inline-flex cursor-pointer items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-border)]/30">
-        <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={onPickFile} />
         {uploading ? "Uploading to Cloudflare…" : "Upload image"}
+        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={onPickFile} />
       </label>
       {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
     </div>
@@ -148,15 +148,16 @@ function ImageMultiUpload({
   const [uploadError, setUploadError] = useState("");
 
   async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
+    // FileList is live — copy files before clearing the input
+    const selected = e.target.files ? Array.from(e.target.files) : [];
     e.target.value = "";
-    if (!files?.length) return;
+    if (!selected.length) return;
     setUploading(true);
     setUploadError("");
     try {
       const slotsLeft = Math.max(0, max - images.length);
       const urls: string[] = [];
-      for (const file of Array.from(files).slice(0, slotsLeft)) {
+      for (const file of selected.slice(0, slotsLeft)) {
         urls.push(await uploadImage(file));
       }
       onChange([...images, ...urls].slice(0, max));
@@ -172,17 +173,17 @@ function ImageMultiUpload({
       <p className="text-sm font-medium text-[var(--color-foreground)]">{label}</p>
       {hint ? <p className="text-xs text-[var(--color-muted)]">{hint}</p> : null}
       <label className="inline-flex cursor-pointer items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-border)]/30">
+        {uploading
+          ? "Uploading to Cloudflare…"
+          : `Upload image${max > 1 ? "s" : ""} (${images.length}/${max})`}
         <input
           type="file"
           accept="image/*"
           multiple
-          className="sr-only"
+          className="hidden"
           disabled={uploading || images.length >= max}
           onChange={onPickFiles}
         />
-        {uploading
-          ? "Uploading to Cloudflare…"
-          : `Upload image${max > 1 ? "s" : ""} (${images.length}/${max})`}
       </label>
       {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
       {images.length > 0 ? (

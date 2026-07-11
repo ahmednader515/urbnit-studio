@@ -5,14 +5,18 @@ import { pickLocalizedText } from "@/lib/i18n/localized-field";
 import { urbnitBtnOutline, urbnitBtnPrimary } from "./urbnit-styles";
 
 const HERO_BG_LAYOUT = [
-  { className: "top-[4%] start-[2%] h-28 w-28 -rotate-6 md:h-40 md:w-40", mobile: true },
-  { className: "top-[8%] end-[4%] h-24 w-24 rotate-12 md:h-36 md:w-36", mobile: true },
-  { className: "top-[38%] start-[8%] h-32 w-32 rotate-3 md:h-44 md:w-44", mobile: true },
-  { className: "bottom-[18%] end-[6%] h-28 w-28 -rotate-12 md:h-40 md:w-40", mobile: true },
-  { className: "top-[22%] end-[28%] h-24 w-24 rotate-6 md:h-32 md:w-32", mobile: false },
-  { className: "bottom-[8%] start-[18%] h-28 w-28 -rotate-3 md:h-36 md:w-36", mobile: false },
-  { className: "top-[52%] end-[2%] h-32 w-32 rotate-12 md:h-44 md:w-44", mobile: false },
-  { className: "bottom-[32%] start-[2%] h-24 w-24 -rotate-6 md:h-32 md:w-32", mobile: false },
+  { className: "top-[3%] start-[1%] h-32 w-32 -rotate-6 md:h-44 md:w-44", mobile: true },
+  { className: "top-[6%] end-[2%] h-28 w-28 rotate-12 md:h-40 md:w-40", mobile: true },
+  { className: "top-[36%] start-[5%] h-36 w-36 rotate-3 md:h-48 md:w-48", mobile: true },
+  { className: "bottom-[14%] end-[3%] h-32 w-32 -rotate-12 md:h-44 md:w-44", mobile: true },
+  { className: "top-[20%] end-[26%] h-28 w-28 rotate-6 md:h-36 md:w-36", mobile: false },
+  { className: "bottom-[4%] start-[14%] h-32 w-32 -rotate-3 md:h-40 md:w-40", mobile: false },
+  { className: "top-[50%] end-[1%] h-36 w-36 rotate-12 md:h-48 md:w-48", mobile: false },
+  { className: "bottom-[28%] start-[1%] h-28 w-28 -rotate-6 md:h-36 md:w-36", mobile: false },
+  { className: "bottom-[2%] end-[22%] h-28 w-28 rotate-9 md:h-36 md:w-36", mobile: false },
+  { className: "top-[58%] start-[22%] h-24 w-24 -rotate-9 md:h-32 md:w-32", mobile: false },
+  { className: "top-[12%] start-[28%] h-24 w-24 rotate-3 md:h-32 md:w-32", mobile: false },
+  { className: "bottom-[40%] end-[18%] h-28 w-28 -rotate-3 md:h-36 md:w-36", mobile: false },
 ] as const;
 
 export function HomeHero({
@@ -34,7 +38,7 @@ export function HomeHero({
     settings.heroCtaSecondaryText,
     settings.heroCtaSecondaryTextEn,
   );
-  const gallery = resolveHeroGalleryImages(settings.heroGalleryImages, 8);
+  const gallery = resolveHeroGalleryImages(settings.heroGalleryImages, HERO_BG_LAYOUT.length);
   const [teacher1, teacher2] = resolveHeroTeacherImages(settings);
 
   return (
@@ -46,14 +50,14 @@ export function HomeHero({
           return (
             <div
               key={`${src}-${i}`}
-              className={`absolute overflow-hidden rounded-2xl opacity-[0.1] shadow-sm ${layout.className} ${layout.mobile ? "" : "hidden md:block"}`}
+              className={`absolute overflow-hidden rounded-2xl opacity-100 shadow-md ring-1 ring-black/5 ${layout.className} ${layout.mobile ? "" : "hidden md:block"}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
             </div>
           );
         })}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-neutral-50/80 to-neutral-50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/35 via-neutral-50/45 to-neutral-50/75" />
       </div>
 
       <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-14 lg:py-24">

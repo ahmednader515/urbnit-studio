@@ -502,6 +502,25 @@ html:not(.light):not(.dark) .home-teachers-hero-blend {
   }
 }
 
+@keyframes urbnit-banner-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.urbnit-banner-track {
+  animation: urbnit-banner-scroll 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urbnit-banner-track {
+    animation: none;
+  }
+}
+
 /* Plyr lesson video (YouTube) */
 .lesson-plyr-video .plyr {
   --plyr-color-main: var(--color-primary);
