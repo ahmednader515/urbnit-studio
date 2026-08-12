@@ -2,12 +2,14 @@
 
 import { useCallback, useState } from "react";
 import type { FawaterakPluginConfig } from "@/types/fawaterak.d";
+import { formatFawaterakError } from "@/lib/fawaterak/format-error";
 
 type SessionResponse = FawaterakPluginConfig & {
   pluginScriptUrl: string;
   depositId?: string;
-  error?: string;
+  error?: unknown;
   code?: string;
+  devLocalhost?: boolean;
 };
 
 type FawaterakBalanceCheckoutProps = {
@@ -18,6 +20,7 @@ type FawaterakBalanceCheckoutProps = {
     loading: string;
     minMaxHint: string;
     errorGeneric: string;
+    localhostWarning: string;
   };
   minAmount: number;
   maxAmount: number;
@@ -49,10 +52,12 @@ export function FawaterakBalanceCheckout({
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [checkoutReady, setCheckoutReady] = useState(false);
 
   const handlePay = useCallback(async () => {
     setError(null);
+    setWarning(null);
     const value = Number(amount);
     if (!Number.isFinite(value) || value < minAmount || value > maxAmount) {
       setError(labels.minMaxHint);
@@ -74,8 +79,12 @@ export function FawaterakBalanceCheckout({
 
       const data = (await res.json()) as SessionResponse;
       if (!res.ok) {
-        setError(data.error || labels.errorGeneric);
+        setError(formatFawaterakError(data.error, labels.errorGeneric));
         return;
+      }
+
+      if (data.devLocalhost) {
+        setWarning(labels.localhostWarning);
       }
 
       await loadScript(data.pluginScriptUrl);
@@ -129,6 +138,12 @@ export function FawaterakBalanceCheckout({
           <span className="text-sm text-[var(--color-muted)]">{currencyShort}</span>
         </div>
       </div>
+
+      {warning ? (
+        <p className="mt-3 text-sm text-amber-700 dark:text-amber-300" role="status">
+          {warning}
+        </p>
+      ) : null}
 
       {error ? (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400" role="alert">

@@ -259,6 +259,8 @@ export const arMessages: Messages = {
         loading: "جاري التحميل…",
         minMaxHint: "أدخل مبلغاً بين 1 و 200,000 ج.م",
         errorGeneric: "تعذر بدء الدفع. حاول مرة أخرى أو استخدم الدفع اليدوي.",
+        localhostWarning:
+          "أنت على localhost — قد لا يعمل الدفع هنا. افتح الموقع المنشور على Vercel لإتمام الدفع.",
       },
       topup: {
         successTitle: "تم الدفع بنجاح",

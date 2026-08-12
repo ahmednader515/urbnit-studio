@@ -260,6 +260,8 @@ export const enMessages: Messages = {
         loading: "Loading…",
         minMaxHint: "Enter an amount between 1 and 200,000 EGP",
         errorGeneric: "Could not start payment. Try again or use manual transfer.",
+        localhostWarning:
+          "You are on localhost — checkout may not work here. Open the deployed Vercel site to complete payment.",
       },
       topup: {
         successTitle: "Payment successful",

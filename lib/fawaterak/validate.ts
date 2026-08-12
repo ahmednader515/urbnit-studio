@@ -1,9 +1,21 @@
 import { getFawaterakValidateUrl } from "./config";
+import { formatFawaterakError } from "./format-error";
 import { computeIframeHashKey } from "./hmac";
 
 export type ValidateResult =
   | { ok: true; domain: string; hashKey: string }
   | { ok: false; domain: string; error: string; status?: number };
+
+function extractApiError(body: unknown, status: number): string {
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+    const fromMessage = formatFawaterakError(record.message, "");
+    if (fromMessage) return fromMessage;
+    const fromBody = formatFawaterakError(body, "");
+    if (fromBody) return fromBody;
+  }
+  return `Fawaterak validate failed (${status})`;
+}
 
 export async function validateFawaterakCredentials(
   vendorKey: string,
@@ -18,6 +30,8 @@ export async function validateFawaterakCredentials(
       method: "GET",
       headers: {
         Authorization: `Bearer ${vendorKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
         "FAWATERAK-HASH-KEY": hashKey,
         "FAWATERAK-DOMAIN": domain,
         "DOMAIN-VERSION": "0",
@@ -28,16 +42,15 @@ export async function validateFawaterakCredentials(
     if (!res.ok) {
       let detail = "";
       try {
-        const body = (await res.json()) as { message?: string };
-        detail = body.message ?? "";
+        detail = extractApiError(await res.json(), res.status);
       } catch {
-        /* ignore */
+        detail = `Fawaterak validate failed (${res.status})`;
       }
       return {
         ok: false,
         domain,
         status: res.status,
-        error: detail || `Fawaterak validate failed (${res.status})`,
+        error: detail,
       };
     }
 
@@ -46,7 +59,7 @@ export async function validateFawaterakCredentials(
     return {
       ok: false,
       domain,
-      error: err instanceof Error ? err.message : "Network error",
+      error: formatFawaterakError(err, "Network error"),
     };
   }
 }

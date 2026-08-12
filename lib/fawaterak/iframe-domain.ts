@@ -29,3 +29,10 @@ export function hostnamesMatch(a: string, b: string): boolean {
 export function browserHostAllowed(browserDomain: string, configuredDomain: string): boolean {
   return hostnamesMatch(browserDomain, configuredDomain);
 }
+
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+export function isLocalDevHost(input: string): boolean {
+  const host = parseHostname(input);
+  return host != null && LOCAL_HOSTS.has(host);
+}

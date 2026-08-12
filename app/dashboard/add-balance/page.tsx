@@ -132,6 +132,10 @@ export default async function AddBalancePage({ searchParams }: AddBalancePagePro
     loading: t(`${ABS}.fawaterak.loading`, "Loading…"),
     minMaxHint: t(`${ABS}.fawaterak.minMaxHint`, "Enter an amount between 1 and 200,000 EGP"),
     errorGeneric: t(`${ABS}.fawaterak.errorGeneric`, "Could not start payment. Try again or use manual transfer."),
+    localhostWarning: t(
+      `${ABS}.fawaterak.localhostWarning`,
+      "You are on localhost — checkout may not work here. Open the deployed Vercel site to complete payment.",
+    ),
   };
 
   const topupLabels = {

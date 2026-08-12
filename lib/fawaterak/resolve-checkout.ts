@@ -1,5 +1,6 @@
 import { domainCandidates } from "./domain-candidates";
-import { browserHostAllowed, normalizeIframeDomain } from "./iframe-domain";
+import { formatFawaterakError } from "./format-error";
+import { browserHostAllowed, isLocalDevHost, normalizeIframeDomain } from "./iframe-domain";
 import { validateFawaterakCredentials } from "./validate";
 import { getConfiguredIframeDomain, getProviderKey, getVendorKey } from "./config";
 
@@ -8,6 +9,7 @@ export type ResolvedCheckout = {
   hashKey: string;
   vendorKey: string;
   providerKey: string;
+  devLocalhost?: boolean;
 };
 
 export type ResolveCheckoutError = {
@@ -33,7 +35,7 @@ export async function resolveCheckoutContext(clientIframeDomain?: string): Promi
       ok: false,
       error: {
         code: "NOT_CONFIGURED",
-        message: err instanceof Error ? err.message : "Fawaterak not configured",
+        message: formatFawaterakError(err, "Fawaterak not configured"),
       },
     };
   }
@@ -42,17 +44,26 @@ export async function resolveCheckoutContext(clientIframeDomain?: string): Promi
     ? normalizeIframeDomain(clientIframeDomain)
     : configuredDomain;
 
-  if (browserDomain && !browserHostAllowed(browserDomain, configuredDomain)) {
+  const devLocalhost =
+    process.env.NODE_ENV === "development" &&
+    !!browserDomain &&
+    isLocalDevHost(browserDomain);
+
+  if (
+    browserDomain &&
+    !devLocalhost &&
+    !browserHostAllowed(browserDomain, configuredDomain)
+  ) {
     return {
       ok: false,
       error: {
         code: "DOMAIN_MISMATCH",
-        message: `Browser domain ${browserDomain} does not match configured ${configuredDomain}`,
+        message: `This site is open at ${browserDomain} but payments are configured for ${configuredDomain}. Open the deployed site or update NEXT_PUBLIC_APP_URL.`,
       },
     };
   }
 
-  const seed = browserDomain ?? configuredDomain;
+  const seed = devLocalhost ? configuredDomain : (browserDomain ?? configuredDomain);
   const candidates = domainCandidates(seed);
   const attempts: Array<{ domain: string; error: string }> = [];
 
@@ -66,17 +77,19 @@ export async function resolveCheckoutContext(clientIframeDomain?: string): Promi
           hashKey: result.hashKey,
           vendorKey,
           providerKey,
+          devLocalhost,
         },
       };
     }
     attempts.push({ domain, error: result.error });
   }
 
+  const firstError = attempts[0]?.error ?? "Fawaterak credential validation failed";
   return {
     ok: false,
     error: {
       code: "VALIDATION_FAILED",
-      message: attempts[0]?.error ?? "Fawaterak credential validation failed",
+      message: formatFawaterakError(firstError, "Fawaterak credential validation failed"),
       attempts,
     },
   };

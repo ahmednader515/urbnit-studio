@@ -9,6 +9,7 @@ import {
   getFawaterakPluginScriptUrl,
 } from "@/lib/fawaterak/config";
 import { buildCheckoutRequestBody } from "@/lib/fawaterak/payload";
+import { formatFawaterakError } from "@/lib/fawaterak/format-error";
 import { resolveCheckoutContext } from "@/lib/fawaterak/resolve-checkout";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
 
@@ -56,7 +57,11 @@ export async function POST(request: Request) {
   const resolved = await resolveCheckoutContext(clientIframeDomain);
   if (!resolved.ok) {
     return NextResponse.json(
-      { error: resolved.error.message, code: resolved.error.code, attempts: resolved.error.attempts },
+      {
+        error: formatFawaterakError(resolved.error.message, "Payment setup failed"),
+        code: resolved.error.code,
+        attempts: resolved.error.attempts,
+      },
       { status: 400 },
     );
   }
@@ -95,5 +100,6 @@ export async function POST(request: Request) {
     redirectOutIframe: true,
     requestBody,
     depositId: deposit.id,
+    devLocalhost: resolved.data.devLocalhost ?? false,
   });
 }

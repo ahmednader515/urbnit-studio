@@ -46,6 +46,8 @@ async function validate(domain) {
   const res = await fetch(`${origin}/api/v2/getPaymentmethods`, {
     headers: {
       Authorization: `Bearer ${vendorKey}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
       "FAWATERAK-HASH-KEY": hashKey,
       "FAWATERAK-DOMAIN": domain,
       "DOMAIN-VERSION": "0",
