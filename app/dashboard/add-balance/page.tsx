@@ -7,7 +7,7 @@ import { CopyButton } from "./CopyButton";
 import { TopupStatusBanner, type TopupStatus } from "./TopupStatusBanner";
 import { getLocaleFromCookie, getServerTranslator } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/types";
-import { FawaterakBalanceCheckout } from "@/components/fawaterak/FawaterakBalanceCheckout";
+import { FawaterakPayLauncher } from "@/components/fawaterak/FawaterakPayLauncher";
 import { FAWATERAK_MAX_AMOUNT, FAWATERAK_MIN_AMOUNT } from "@/lib/fawaterak/constants";
 
 function toWhatsAppDigits(input: string | null | undefined): string {
@@ -128,14 +128,8 @@ export default async function AddBalancePage({ searchParams }: AddBalancePagePro
   const fawaterakLabels = {
     amountLabel: t(`${ABS}.fawaterak.amountLabel`, "Amount"),
     amountPlaceholder: t(`${ABS}.fawaterak.amountPlaceholder`, "100"),
-    payButton: t(`${ABS}.fawaterak.payButton`, "Pay with Fawaterak"),
-    loading: t(`${ABS}.fawaterak.loading`, "Loading…"),
+    continueButton: t(`${ABS}.fawaterak.continueButton`, "Continue to payment"),
     minMaxHint: t(`${ABS}.fawaterak.minMaxHint`, "Enter an amount between 1 and 200,000 EGP"),
-    errorGeneric: t(`${ABS}.fawaterak.errorGeneric`, "Could not start payment. Try again or use manual transfer."),
-    localhostWarning: t(
-      `${ABS}.fawaterak.localhostWarning`,
-      "You are on localhost — checkout may not work here. Open the deployed Vercel site to complete payment.",
-    ),
   };
 
   const topupLabels = {
@@ -170,11 +164,12 @@ export default async function AddBalancePage({ searchParams }: AddBalancePagePro
       {topupStatus ? <TopupStatusBanner status={topupStatus} labels={topupLabels} /> : null}
 
       <div className="mt-8 space-y-6">
-        <FawaterakBalanceCheckout
+        <FawaterakPayLauncher
           labels={fawaterakLabels}
           minAmount={FAWATERAK_MIN_AMOUNT}
           maxAmount={FAWATERAK_MAX_AMOUNT}
           currencyShort={t("common.egyptianPoundShort", "EGP")}
+          checkoutPath="/dashboard/add-balance/checkout"
         />
 
         <div className="relative flex items-center py-2">
