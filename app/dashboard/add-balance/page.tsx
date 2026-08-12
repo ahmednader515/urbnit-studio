@@ -4,8 +4,11 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { getHomepageSettings } from "@/lib/db";
 import { CopyButton } from "./CopyButton";
+import { TopupStatusBanner, type TopupStatus } from "./TopupStatusBanner";
 import { getLocaleFromCookie, getServerTranslator } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/types";
+import { FawaterakBalanceCheckout } from "@/components/fawaterak/FawaterakBalanceCheckout";
+import { FAWATERAK_MAX_AMOUNT, FAWATERAK_MIN_AMOUNT } from "@/lib/fawaterak/constants";
 
 function toWhatsAppDigits(input: string | null | undefined): string {
   if (!input) return "";
@@ -53,10 +56,23 @@ function resolveAddBalanceCopy(
   return t(`${ABS}.${key}`, ADD_BALANCE_FALLBACK_EN[key]);
 }
 
-export default async function AddBalancePage() {
+function parseTopupStatus(raw: string | undefined): TopupStatus | null {
+  if (raw === "success" || raw === "failed" || raw === "pending") return raw;
+  return null;
+}
+
+type AddBalancePageProps = {
+  searchParams: Promise<{ topup?: string }>;
+};
+
+export default async function AddBalancePage({ searchParams }: AddBalancePageProps) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
   if (session.user.role !== "STUDENT") redirect("/dashboard");
+
+  const params = await searchParams;
+  const topupStatus = parseTopupStatus(params.topup);
+
   const [settings, locale, t] = await Promise.all([
     getHomepageSettings(),
     getLocaleFromCookie(),
@@ -109,6 +125,33 @@ export default async function AddBalancePage() {
     "whatsappButton",
   );
 
+  const fawaterakLabels = {
+    amountLabel: t(`${ABS}.fawaterak.amountLabel`, "Amount"),
+    amountPlaceholder: t(`${ABS}.fawaterak.amountPlaceholder`, "100"),
+    payButton: t(`${ABS}.fawaterak.payButton`, "Pay with Fawaterak"),
+    loading: t(`${ABS}.fawaterak.loading`, "Loading…"),
+    minMaxHint: t(`${ABS}.fawaterak.minMaxHint`, "Enter an amount between 1 and 200,000 EGP"),
+    errorGeneric: t(`${ABS}.fawaterak.errorGeneric`, "Could not start payment. Try again or use manual transfer."),
+  };
+
+  const topupLabels = {
+    successTitle: t(`${ABS}.topup.successTitle`, "Payment successful"),
+    successBody: t(
+      `${ABS}.topup.successBody`,
+      "Your balance will be credited after the payment is confirmed. This may take a few minutes.",
+    ),
+    failedTitle: t(`${ABS}.topup.failedTitle`, "Payment failed"),
+    failedBody: t(
+      `${ABS}.topup.failedBody`,
+      "The payment did not complete. Try again or use Vodafone Cash.",
+    ),
+    pendingTitle: t(`${ABS}.topup.pendingTitle`, "Payment pending"),
+    pendingBody: t(
+      `${ABS}.topup.pendingBody`,
+      "Your payment is being processed. Balance will be added once confirmed.",
+    ),
+  };
+
   return (
     <div className="max-w-2xl">
       <Link
@@ -120,7 +163,24 @@ export default async function AddBalancePage() {
       <h2 className="mt-6 text-2xl font-bold text-[var(--color-foreground)]">{pageTitle}</h2>
       <p className="mt-1 text-[var(--color-muted)]">{pageSubtitle}</p>
 
+      {topupStatus ? <TopupStatusBanner status={topupStatus} labels={topupLabels} /> : null}
+
       <div className="mt-8 space-y-6">
+        <FawaterakBalanceCheckout
+          labels={fawaterakLabels}
+          minAmount={FAWATERAK_MIN_AMOUNT}
+          maxAmount={FAWATERAK_MAX_AMOUNT}
+          currencyShort={t("common.egyptianPoundShort", "EGP")}
+        />
+
+        <div className="relative flex items-center py-2">
+          <div className="flex-grow border-t border-[var(--color-border)]" />
+          <span className="mx-4 flex-shrink text-sm text-[var(--color-muted)]">
+            {t(`${ABS}.manualDivider`, "Or pay manually")}
+          </span>
+          <div className="flex-grow border-t border-[var(--color-border)]" />
+        </div>
+
         <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
           <h3 className="text-lg font-semibold text-[var(--color-foreground)]">{methodTitle}</h3>
           <p className="mt-2 text-sm text-[var(--color-muted)]">{transferInstruction}</p>

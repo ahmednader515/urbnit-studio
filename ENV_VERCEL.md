@@ -13,6 +13,10 @@
 | **DATABASE_URL** | الرابط الكامل لقاعدة PostgreSQL (من Neon أو Supabase أو Vercel Postgres). مثال: `postgresql://user:password@host/dbname?sslmode=require` | Production + Preview |
 | **NEXTAUTH_SECRET** | نص عشوائي طويل (مثلاً 32 حرفاً). يمكن استخدام: https://generate-secret.vercel.app/32 | Production + Preview |
 | **NEXTAUTH_URL** | عنوان موقعك على Vercel بالضبط، مثل: `https://your-app.vercel.app` أو دومينك المخصص | Production + Preview |
+| **FAWATERAK_ENV** | `staging` للاختبار أو `live` للإنتاج | Production + Preview |
+| **FAWATERAK_VENDOR_KEY** | مفتاح API من لوحة Fawaterak | Production + Preview |
+| **FAWATERAK_PROVIDER_KEY** | Provider Key من Integrations | Production + Preview |
+| **NEXT_PUBLIC_APP_URL** | نفس عنوان الموقع العام (بدون `/` في النهاية) — مطلوب لـ Fawaterak iframe | Production + Preview |
 
 4. اضغط **Save** بعد كل متغير.
 5. من **Deployments** → اختر آخر نشر → **⋯** → **Redeploy** (لتحميل المتغيرات الجديدة).
@@ -21,6 +25,8 @@
 
 - **DATABASE_URL** يجب أن يكون رابط قاعدة بيانات **سحابية** (Neon / Supabase / Vercel Postgres)، وليس من جهازك (لا تستخدم `localhost`).
 - **NEXTAUTH_URL** يجب أن يطابق عنوان الموقع بعد النشر (مع `https://` وبدون شرطة في النهاية).
+- **NEXT_PUBLIC_APP_URL** يُستخدم لروابط Fawaterak (iframe + webhook). يجب أن يطابق الدومين المسجّل في لوحة Fawaterak.
+- راجع [`FAWATERAK_SETUP.md`](FAWATERAK_SETUP.md) لإعداد بوابة الدفع.
 - بعد إضافة المتغيرات يجب **Redeploy** حتى تُطبَّق على النسخة المرفوعة.
 
 ## التحقق

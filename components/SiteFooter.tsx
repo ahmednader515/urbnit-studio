@@ -59,11 +59,14 @@ export async function SiteFooter({ settings }: { settings?: HomepageSetting | nu
               </Link>
             </div>
             <div className="flex flex-col gap-2">
-              <Link href="/privacy" className="text-neutral-400 hover:text-white">
-                {locale === "ar" ? "الخصوصية" : "Privacy"}
-              </Link>
               <Link href="/terms" className="text-neutral-400 hover:text-white">
-                {locale === "ar" ? "الشروط" : "Terms"}
+                {locale === "ar" ? "الشروط والأحكام" : "Terms & Conditions"}
+              </Link>
+              <Link href="/privacy" className="text-neutral-400 hover:text-white">
+                {locale === "ar" ? "سياسة الخصوصية" : "Privacy Policy"}
+              </Link>
+              <Link href="/refund" className="text-neutral-400 hover:text-white">
+                {locale === "ar" ? "سياسة الاسترداد" : "Refund Policy"}
               </Link>
             </div>
           </div>

@@ -251,6 +251,23 @@ export const arMessages: Messages = {
     addBalanceStudent: {
       title: "إضافة رصيد",
       subtitle: "اختر طريقة الدفع ثم اتبع التعليمات",
+      manualDivider: "أو الدفع يدوياً",
+      fawaterak: {
+        amountLabel: "المبلغ",
+        amountPlaceholder: "100",
+        payButton: "ادفع عبر Fawaterak",
+        loading: "جاري التحميل…",
+        minMaxHint: "أدخل مبلغاً بين 1 و 200,000 ج.م",
+        errorGeneric: "تعذر بدء الدفع. حاول مرة أخرى أو استخدم الدفع اليدوي.",
+      },
+      topup: {
+        successTitle: "تم الدفع بنجاح",
+        successBody: "سيتم إضافة الرصيد إلى حسابك بعد تأكيد العملية. قد يستغرق ذلك دقائقاً.",
+        failedTitle: "فشل الدفع",
+        failedBody: "لم تكتمل عملية الدفع. يمكنك المحاولة مرة أخرى أو استخدام فودافون كاش.",
+        pendingTitle: "الدفع قيد المعالجة",
+        pendingBody: "عملية الدفع قيد المراجعة. سيتم إضافة الرصيد عند التأكيد.",
+      },
       methodTitle: "فودافون كاش",
       transferInstruction: "قم بتحويل المبلغ المطلوب إلى رقم المحفظة التالي:",
       confirmationNote: "بعد التحويل، يجب إرسال صورة تأكيد التحويل على واتساب على الرقم",

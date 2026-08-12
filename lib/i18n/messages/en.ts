@@ -252,6 +252,23 @@ export const enMessages: Messages = {
     addBalanceStudent: {
       title: "Add balance",
       subtitle: "Choose a payment method then follow the instructions",
+      manualDivider: "Or pay manually",
+      fawaterak: {
+        amountLabel: "Amount",
+        amountPlaceholder: "100",
+        payButton: "Pay with Fawaterak",
+        loading: "Loading…",
+        minMaxHint: "Enter an amount between 1 and 200,000 EGP",
+        errorGeneric: "Could not start payment. Try again or use manual transfer.",
+      },
+      topup: {
+        successTitle: "Payment successful",
+        successBody: "Your balance will be credited after the payment is confirmed. This may take a few minutes.",
+        failedTitle: "Payment failed",
+        failedBody: "The payment did not complete. Try again or use Vodafone Cash.",
+        pendingTitle: "Payment pending",
+        pendingBody: "Your payment is being processed. Balance will be added once confirmed.",
+      },
       methodTitle: "Vodafone Cash",
       transferInstruction: "Transfer the required amount to the following wallet number:",
       confirmationNote:
