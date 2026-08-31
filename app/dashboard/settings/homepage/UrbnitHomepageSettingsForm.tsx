@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import type { HomepageFaq, HomepageSetting } from "@/lib/types";
 import {
   resolveCoursesPromoImages,
@@ -208,10 +207,11 @@ function ImageMultiUpload({
 }
 
 export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSettings: HomepageSetting }) {
-  const router = useRouter();
   const t = useT();
+  const Hp = "dashboard.homepageSettingsForm";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [s, setS] = useState(initialSettings);
   const [faqs, setFaqs] = useState<HomepageFaq[]>([]);
   const [gallery, setGallery] = useState<string[]>(
@@ -229,6 +229,12 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(""), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
   function patch<K extends keyof HomepageSetting>(key: K, value: HomepageSetting[K]) {
     setS((prev) => ({ ...prev, [key]: value }));
   }
@@ -236,6 +242,7 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
   async function handleSave() {
     setSaving(true);
     setError("");
+    setSuccess("");
     try {
       const res = await fetch("/api/dashboard/settings/homepage", {
         method: "PUT",
@@ -315,11 +322,13 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Save failed");
+        throw new Error(data.error ?? t(`${Hp}.saveFailed`, "Could not save"));
       }
-      router.refresh();
+      setSuccess(t(`${Hp}.saveSuccess`, "Changes saved."));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      setError(e instanceof Error ? e.message : t(`${Hp}.saveFailed`, "Could not save"));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSaving(false);
     }
@@ -373,8 +382,18 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
   }
 
   return (
-    <div className="mt-8 space-y-8">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+    <>
+      <div className="mt-8 space-y-8 pb-24">
+      {error ? (
+        <div className="rounded-[var(--radius-btn)] bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      ) : null}
+      {success ? (
+        <div className="rounded-[var(--radius-btn)] bg-emerald-500/15 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          {success}
+        </div>
+      ) : null}
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold">Brand & header</h3>
@@ -737,15 +756,24 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
           multiline
         />
       </section>
+      </div>
 
-      <button
-        type="button"
-        disabled={saving}
-        onClick={handleSave}
-        className="rounded-lg bg-[#0066FF] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+      <div
+        className="fixed inset-x-0 bottom-0 z-[100] border-t border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 py-3 shadow-[0_-12px_40px_rgb(0_0_0/0.06)] backdrop-blur-md supports-[padding:env(safe-area-inset-bottom)]:pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:shadow-[0_-12px_40px_rgb(0_0_0/0.35)]"
+        role="region"
+        aria-label={t(`${Hp}.saveButtonIdle`, "Save changes")}
       >
-        {saving ? t("common.saving", "Saving...") : t("common.save", "Save")}
-      </button>
-    </div>
+        <div className="mx-auto flex max-w-2xl justify-stretch sm:justify-end">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={handleSave}
+            className="w-full rounded-[var(--radius-btn)] bg-[#0066FF] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#0052cc] disabled:opacity-60 sm:w-auto sm:px-8"
+          >
+            {saving ? t(`${Hp}.saveButtonBusy`, "Saving...") : t(`${Hp}.saveButtonIdle`, "Save changes")}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

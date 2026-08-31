@@ -2149,6 +2149,25 @@ function pickReviewsSectionString(
   return fallback ?? null;
 }
 
+type HomepageSettingColumnValue = string | boolean | number | null;
+
+async function batchUpdateHomepageColumns(
+  columns: Record<string, HomepageSettingColumnValue>,
+): Promise<void> {
+  const entries = Object.entries(columns);
+  if (entries.length === 0) return;
+  const setParts: string[] = [];
+  const values: HomepageSettingColumnValue[] = [];
+  for (const [col, val] of entries) {
+    setParts.push(`"${col}" = $${values.length + 1}`);
+    values.push(val);
+  }
+  await sql(
+    `UPDATE "HomepageSetting" SET ${setParts.join(", ")}, updated_at = NOW() WHERE id = 'default'`,
+    values,
+  );
+}
+
 export async function updateHomepageSettings(data: {
   hero_template?: string | null;
   teacher_image_url?: string | null;
@@ -2258,390 +2277,134 @@ export async function updateHomepageSettings(data: {
   platform_news_section_title?: string | null;
   platform_news_section_title_en?: string | null;
 } & UrbnitHomepageUpdate): Promise<void> {
-  await ensureHomepageHeroTemplateColumns();
-  await ensureHomepageHeroSliderCourseIdColumns();
-  await ensureHomepageReviewsSectionCopyColumns();
-  await ensureHomepageHeroCustomBgColumns();
-  await ensureAddBalanceSettingsColumns();
-  await ensureHomepagePrimaryColorColumn();
-  await ensureHomepageHeaderLogoColumn();
-  await ensureHomepageTeamSupportLinksColumns();
-  await ensureHomepageCtaCopyColumns();
-  await ensureHomepageBilingualTextColumns();
-  await ensureHomepagePlatformDetailsColumns();
-  await ensureHomepagePlatformNewsColumns();
-  await ensureHomepageCopyrightOverlayColumns();
-  await ensureHomepageUrbnitColumns();
-  if (data.hero_template !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_template = ${data.hero_template}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.teacher_image_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET teacher_image_url = ${data.teacher_image_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_title = ${data.hero_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_title_en = ${data.hero_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slogan !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slogan = ${data.hero_slogan}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slogan_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slogan_en = ${data.hero_slogan_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_name !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET platform_name = ${data.platform_name}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_name_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET platform_name_en = ${data.platform_name_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.header_logo_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET header_logo_url = ${data.header_logo_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.primary_color !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET primary_color = ${data.primary_color}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.youtube_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET youtube_url = ${data.youtube_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.linkedin_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET linkedin_url = ${data.linkedin_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.whatsapp_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET whatsapp_url = ${data.whatsapp_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.facebook_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET facebook_url = ${data.facebook_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.telegram_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET telegram_url = ${data.telegram_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.team_youtube_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET team_youtube_url = ${data.team_youtube_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.team_linkedin_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET team_linkedin_url = ${data.team_linkedin_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.team_whatsapp_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET team_whatsapp_url = ${data.team_whatsapp_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.team_facebook_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET team_facebook_url = ${data.team_facebook_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.team_telegram_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET team_telegram_url = ${data.team_telegram_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.social_right_label !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET social_right_label = ${data.social_right_label}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.social_right_label_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET social_right_label_en = ${data.social_right_label_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.social_left_label !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET social_left_label = ${data.social_left_label}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.social_left_label_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET social_left_label_en = ${data.social_left_label_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.social_left_enabled !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET social_left_enabled = ${data.social_left_enabled}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.page_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET page_title = ${data.page_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.page_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET page_title_en = ${data.page_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_bg_preset !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_bg_preset = ${data.hero_bg_preset}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_bg_custom_from !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_bg_custom_from = ${data.hero_bg_custom_from}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_bg_custom_to !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_bg_custom_to = ${data.hero_bg_custom_to}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_float_image_1 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_float_image_1 = ${data.hero_float_image_1}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_float_image_2 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_float_image_2 = ${data.hero_float_image_2}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_float_image_3 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_float_image_3 = ${data.hero_float_image_3}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_image_1 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_image_1 = ${data.hero_slider_image_1}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_image_2 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_image_2 = ${data.hero_slider_image_2}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_image_3 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_image_3 = ${data.hero_slider_image_3}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_image_4 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_image_4 = ${data.hero_slider_image_4}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_image_5 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_image_5 = ${data.hero_slider_image_5}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_course_id_1 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_course_id_1 = ${data.hero_slider_course_id_1}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_course_id_2 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_course_id_2 = ${data.hero_slider_course_id_2}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_course_id_3 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_course_id_3 = ${data.hero_slider_course_id_3}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_course_id_4 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_course_id_4 = ${data.hero_slider_course_id_4}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_course_id_5 !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_course_id_5 = ${data.hero_slider_course_id_5}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero_slider_interval_ms !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero_slider_interval_ms = ${data.hero_slider_interval_ms}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_title = ${data.hero3_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_title_en = ${data.hero3_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_subtitle !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_subtitle = ${data.hero3_subtitle}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_subtitle_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_subtitle_en = ${data.hero3_subtitle_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_phone_image_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_phone_image_url = ${data.hero3_phone_image_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_phone_bg_color !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_phone_bg_color = ${data.hero3_phone_bg_color}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_store_badge_1_image_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_store_badge_1_image_url = ${data.hero3_store_badge_1_image_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_store_badge_1_link !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_store_badge_1_link = ${data.hero3_store_badge_1_link}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_store_badge_2_image_url !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_store_badge_2_image_url = ${data.hero3_store_badge_2_image_url}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.hero3_store_badge_2_link !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET hero3_store_badge_2_link = ${data.hero3_store_badge_2_link}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_title = ${data.footer_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_title_en = ${data.footer_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_tagline !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_tagline = ${data.footer_tagline}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_tagline_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_tagline_en = ${data.footer_tagline_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_copyright !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_copyright = ${data.footer_copyright}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.footer_copyright_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET footer_copyright_en = ${data.footer_copyright_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.reviews_section_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET reviews_section_title = ${data.reviews_section_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.reviews_section_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET reviews_section_title_en = ${data.reviews_section_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.reviews_section_subtitle !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET reviews_section_subtitle = ${data.reviews_section_subtitle}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.reviews_section_subtitle_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET reviews_section_subtitle_en = ${data.reviews_section_subtitle_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_badge_text !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_badge_text = ${data.cta_badge_text}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_badge_text_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_badge_text_en = ${data.cta_badge_text_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_title = ${data.cta_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_title_en = ${data.cta_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_description !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_description = ${data.cta_description}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_description_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_description_en = ${data.cta_description_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_button_text !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_button_text = ${data.cta_button_text}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.cta_button_text_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET cta_button_text_en = ${data.cta_button_text_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.teachers_enabled !== undefined) {
-    await ensureHomepageTeachersEnabledColumn();
-    await sql`
-      INSERT INTO "HomepageSetting" (id, teachers_enabled, updated_at)
-      VALUES ('default', ${data.teachers_enabled}, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        teachers_enabled = EXCLUDED.teachers_enabled,
-        updated_at = NOW()
-    `;
-  }
-  if (data.subscriptions_enabled !== undefined) {
-    await ensureHomepageSubscriptionsEnabledColumn();
-    await sql`
-      INSERT INTO "HomepageSetting" (id, subscriptions_enabled, updated_at)
-      VALUES ('default', ${data.subscriptions_enabled}, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        subscriptions_enabled = EXCLUDED.subscriptions_enabled,
-        updated_at = NOW()
-    `;
-  }
-  if (data.store_enabled !== undefined) {
-    await ensureHomepageStoreEnabledColumn();
-    await sql`
-      INSERT INTO "HomepageSetting" (id, store_enabled, updated_at)
-      VALUES ('default', ${data.store_enabled}, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        store_enabled = EXCLUDED.store_enabled,
-        updated_at = NOW()
-    `;
-  }
-  if (data.store_section_title !== undefined) {
-    await ensureHomepageStoreSectionCopyColumns();
-    await sql`UPDATE "HomepageSetting" SET store_section_title = ${data.store_section_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.store_section_title_en !== undefined) {
-    await ensureHomepageStoreSectionCopyColumns();
-    await sql`UPDATE "HomepageSetting" SET store_section_title_en = ${data.store_section_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.store_section_description !== undefined) {
-    await ensureHomepageStoreSectionCopyColumns();
-    await sql`UPDATE "HomepageSetting" SET store_section_description = ${data.store_section_description}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.store_section_description_en !== undefined) {
-    await ensureHomepageStoreSectionCopyColumns();
-    await sql`UPDATE "HomepageSetting" SET store_section_description_en = ${data.store_section_description_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_enabled !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`
-      INSERT INTO "HomepageSetting" (id, platform_details_enabled, updated_at)
-      VALUES ('default', ${data.platform_details_enabled}, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        platform_details_enabled = EXCLUDED.platform_details_enabled,
-        updated_at = NOW()
-    `;
-  }
-  if (data.platform_details_title !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_title = ${data.platform_details_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_title_en !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_title_en = ${data.platform_details_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_subtitle !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_subtitle = ${data.platform_details_subtitle}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_subtitle_en !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_subtitle_en = ${data.platform_details_subtitle_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_background_color !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_background_color = ${data.platform_details_background_color}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_details_items !== undefined) {
-    await ensureHomepagePlatformDetailsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_details_items = ${data.platform_details_items}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_news_enabled !== undefined) {
-    await ensureHomepagePlatformNewsColumns();
-    await sql`
-      INSERT INTO "HomepageSetting" (id, platform_news_enabled, updated_at)
-      VALUES ('default', ${data.platform_news_enabled}, NOW())
-      ON CONFLICT (id) DO UPDATE SET
-        platform_news_enabled = EXCLUDED.platform_news_enabled,
-        updated_at = NOW()
-    `;
-  }
-  if (data.platform_news_items !== undefined) {
-    await ensureHomepagePlatformNewsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_news_items = ${data.platform_news_items}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_news_section_title !== undefined) {
-    await ensureHomepagePlatformNewsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_news_section_title = ${data.platform_news_section_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.platform_news_section_title_en !== undefined) {
-    await ensureHomepagePlatformNewsColumns();
-    await sql`UPDATE "HomepageSetting" SET platform_news_section_title_en = ${data.platform_news_section_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_title = ${data.add_balance_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_title_en = ${data.add_balance_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_subtitle !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_subtitle = ${data.add_balance_subtitle}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_subtitle_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_subtitle_en = ${data.add_balance_subtitle_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_method_title !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_method_title = ${data.add_balance_method_title}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_method_title_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_method_title_en = ${data.add_balance_method_title_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_transfer_instruction !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_transfer_instruction = ${data.add_balance_transfer_instruction}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_transfer_instruction_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_transfer_instruction_en = ${data.add_balance_transfer_instruction_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_wallet_number !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_wallet_number = ${data.add_balance_wallet_number}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_confirmation_note !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_confirmation_note = ${data.add_balance_confirmation_note}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_confirmation_note_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_confirmation_note_en = ${data.add_balance_confirmation_note_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_whatsapp_number !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_whatsapp_number = ${data.add_balance_whatsapp_number}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_whatsapp_button_text !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_whatsapp_button_text = ${data.add_balance_whatsapp_button_text}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_whatsapp_button_text_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_whatsapp_button_text_en = ${data.add_balance_whatsapp_button_text_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_waiting_note !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_waiting_note = ${data.add_balance_waiting_note}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.add_balance_waiting_note_en !== undefined) {
-    await sql`UPDATE "HomepageSetting" SET add_balance_waiting_note_en = ${data.add_balance_waiting_note_en}, updated_at = NOW() WHERE id = 'default'`;
-  }
-  if (data.copyright_overlay_style !== undefined) {
-    await ensureHomepageCopyrightOverlayColumns();
-    await sql`UPDATE "HomepageSetting" SET copyright_overlay_style = ${data.copyright_overlay_style}, updated_at = NOW() WHERE id = 'default'`;
-  }
+  await Promise.all([
+    ensureHomepageHeroTemplateColumns(),
+    ensureHomepageHeroSliderCourseIdColumns(),
+    ensureHomepageReviewsSectionCopyColumns(),
+    ensureHomepageHeroCustomBgColumns(),
+    ensureAddBalanceSettingsColumns(),
+    ensureHomepagePrimaryColorColumn(),
+    ensureHomepageHeaderLogoColumn(),
+    ensureHomepageTeamSupportLinksColumns(),
+    ensureHomepageCtaCopyColumns(),
+    ensureHomepageBilingualTextColumns(),
+    ensureHomepagePlatformDetailsColumns(),
+    ensureHomepagePlatformNewsColumns(),
+    ensureHomepageCopyrightOverlayColumns(),
+    ensureHomepageUrbnitColumns(),
+    ensureHomepageTeachersEnabledColumn(),
+    ensureHomepageSubscriptionsEnabledColumn(),
+    ensureHomepageStoreEnabledColumn(),
+    ensureHomepageStoreSectionCopyColumns(),
+  ]);
+  const pending: Record<string, HomepageSettingColumnValue> = {};
+  if (data.hero_template !== undefined) pending.hero_template = data.hero_template;
+  if (data.teacher_image_url !== undefined) pending.teacher_image_url = data.teacher_image_url;
+  if (data.hero_title !== undefined) pending.hero_title = data.hero_title;
+  if (data.hero_title_en !== undefined) pending.hero_title_en = data.hero_title_en;
+  if (data.hero_slogan !== undefined) pending.hero_slogan = data.hero_slogan;
+  if (data.hero_slogan_en !== undefined) pending.hero_slogan_en = data.hero_slogan_en;
+  if (data.platform_name !== undefined) pending.platform_name = data.platform_name;
+  if (data.platform_name_en !== undefined) pending.platform_name_en = data.platform_name_en;
+  if (data.header_logo_url !== undefined) pending.header_logo_url = data.header_logo_url;
+  if (data.primary_color !== undefined) pending.primary_color = data.primary_color;
+  if (data.youtube_url !== undefined) pending.youtube_url = data.youtube_url;
+  if (data.linkedin_url !== undefined) pending.linkedin_url = data.linkedin_url;
+  if (data.whatsapp_url !== undefined) pending.whatsapp_url = data.whatsapp_url;
+  if (data.facebook_url !== undefined) pending.facebook_url = data.facebook_url;
+  if (data.telegram_url !== undefined) pending.telegram_url = data.telegram_url;
+  if (data.team_youtube_url !== undefined) pending.team_youtube_url = data.team_youtube_url;
+  if (data.team_linkedin_url !== undefined) pending.team_linkedin_url = data.team_linkedin_url;
+  if (data.team_whatsapp_url !== undefined) pending.team_whatsapp_url = data.team_whatsapp_url;
+  if (data.team_facebook_url !== undefined) pending.team_facebook_url = data.team_facebook_url;
+  if (data.team_telegram_url !== undefined) pending.team_telegram_url = data.team_telegram_url;
+  if (data.social_right_label !== undefined) pending.social_right_label = data.social_right_label;
+  if (data.social_right_label_en !== undefined) pending.social_right_label_en = data.social_right_label_en;
+  if (data.social_left_label !== undefined) pending.social_left_label = data.social_left_label;
+  if (data.social_left_label_en !== undefined) pending.social_left_label_en = data.social_left_label_en;
+  if (data.social_left_enabled !== undefined) pending.social_left_enabled = data.social_left_enabled;
+  if (data.page_title !== undefined) pending.page_title = data.page_title;
+  if (data.page_title_en !== undefined) pending.page_title_en = data.page_title_en;
+  if (data.hero_bg_preset !== undefined) pending.hero_bg_preset = data.hero_bg_preset;
+  if (data.hero_bg_custom_from !== undefined) pending.hero_bg_custom_from = data.hero_bg_custom_from;
+  if (data.hero_bg_custom_to !== undefined) pending.hero_bg_custom_to = data.hero_bg_custom_to;
+  if (data.hero_float_image_1 !== undefined) pending.hero_float_image_1 = data.hero_float_image_1;
+  if (data.hero_float_image_2 !== undefined) pending.hero_float_image_2 = data.hero_float_image_2;
+  if (data.hero_float_image_3 !== undefined) pending.hero_float_image_3 = data.hero_float_image_3;
+  if (data.hero_slider_image_1 !== undefined) pending.hero_slider_image_1 = data.hero_slider_image_1;
+  if (data.hero_slider_image_2 !== undefined) pending.hero_slider_image_2 = data.hero_slider_image_2;
+  if (data.hero_slider_image_3 !== undefined) pending.hero_slider_image_3 = data.hero_slider_image_3;
+  if (data.hero_slider_image_4 !== undefined) pending.hero_slider_image_4 = data.hero_slider_image_4;
+  if (data.hero_slider_image_5 !== undefined) pending.hero_slider_image_5 = data.hero_slider_image_5;
+  if (data.hero_slider_course_id_1 !== undefined) pending.hero_slider_course_id_1 = data.hero_slider_course_id_1;
+  if (data.hero_slider_course_id_2 !== undefined) pending.hero_slider_course_id_2 = data.hero_slider_course_id_2;
+  if (data.hero_slider_course_id_3 !== undefined) pending.hero_slider_course_id_3 = data.hero_slider_course_id_3;
+  if (data.hero_slider_course_id_4 !== undefined) pending.hero_slider_course_id_4 = data.hero_slider_course_id_4;
+  if (data.hero_slider_course_id_5 !== undefined) pending.hero_slider_course_id_5 = data.hero_slider_course_id_5;
+  if (data.hero_slider_interval_ms !== undefined) pending.hero_slider_interval_ms = data.hero_slider_interval_ms;
+  if (data.hero3_title !== undefined) pending.hero3_title = data.hero3_title;
+  if (data.hero3_title_en !== undefined) pending.hero3_title_en = data.hero3_title_en;
+  if (data.hero3_subtitle !== undefined) pending.hero3_subtitle = data.hero3_subtitle;
+  if (data.hero3_subtitle_en !== undefined) pending.hero3_subtitle_en = data.hero3_subtitle_en;
+  if (data.hero3_phone_image_url !== undefined) pending.hero3_phone_image_url = data.hero3_phone_image_url;
+  if (data.hero3_phone_bg_color !== undefined) pending.hero3_phone_bg_color = data.hero3_phone_bg_color;
+  if (data.hero3_store_badge_1_image_url !== undefined) pending.hero3_store_badge_1_image_url = data.hero3_store_badge_1_image_url;
+  if (data.hero3_store_badge_1_link !== undefined) pending.hero3_store_badge_1_link = data.hero3_store_badge_1_link;
+  if (data.hero3_store_badge_2_image_url !== undefined) pending.hero3_store_badge_2_image_url = data.hero3_store_badge_2_image_url;
+  if (data.hero3_store_badge_2_link !== undefined) pending.hero3_store_badge_2_link = data.hero3_store_badge_2_link;
+  if (data.footer_title !== undefined) pending.footer_title = data.footer_title;
+  if (data.footer_title_en !== undefined) pending.footer_title_en = data.footer_title_en;
+  if (data.footer_tagline !== undefined) pending.footer_tagline = data.footer_tagline;
+  if (data.footer_tagline_en !== undefined) pending.footer_tagline_en = data.footer_tagline_en;
+  if (data.footer_copyright !== undefined) pending.footer_copyright = data.footer_copyright;
+  if (data.footer_copyright_en !== undefined) pending.footer_copyright_en = data.footer_copyright_en;
+  if (data.reviews_section_title !== undefined) pending.reviews_section_title = data.reviews_section_title;
+  if (data.reviews_section_title_en !== undefined) pending.reviews_section_title_en = data.reviews_section_title_en;
+  if (data.reviews_section_subtitle !== undefined) pending.reviews_section_subtitle = data.reviews_section_subtitle;
+  if (data.reviews_section_subtitle_en !== undefined) pending.reviews_section_subtitle_en = data.reviews_section_subtitle_en;
+  if (data.cta_badge_text !== undefined) pending.cta_badge_text = data.cta_badge_text;
+  if (data.cta_badge_text_en !== undefined) pending.cta_badge_text_en = data.cta_badge_text_en;
+  if (data.cta_title !== undefined) pending.cta_title = data.cta_title;
+  if (data.cta_title_en !== undefined) pending.cta_title_en = data.cta_title_en;
+  if (data.cta_description !== undefined) pending.cta_description = data.cta_description;
+  if (data.cta_description_en !== undefined) pending.cta_description_en = data.cta_description_en;
+  if (data.cta_button_text !== undefined) pending.cta_button_text = data.cta_button_text;
+  if (data.cta_button_text_en !== undefined) pending.cta_button_text_en = data.cta_button_text_en;
+  if (data.teachers_enabled !== undefined) pending.teachers_enabled = data.teachers_enabled;
+  if (data.subscriptions_enabled !== undefined) pending.subscriptions_enabled = data.subscriptions_enabled;
+  if (data.store_enabled !== undefined) pending.store_enabled = data.store_enabled;
+  if (data.store_section_title !== undefined) pending.store_section_title = data.store_section_title;
+  if (data.store_section_title_en !== undefined) pending.store_section_title_en = data.store_section_title_en;
+  if (data.store_section_description !== undefined) pending.store_section_description = data.store_section_description;
+  if (data.store_section_description_en !== undefined) pending.store_section_description_en = data.store_section_description_en;
+  if (data.platform_details_enabled !== undefined) pending.platform_details_enabled = data.platform_details_enabled;
+  if (data.platform_details_title !== undefined) pending.platform_details_title = data.platform_details_title;
+  if (data.platform_details_title_en !== undefined) pending.platform_details_title_en = data.platform_details_title_en;
+  if (data.platform_details_subtitle !== undefined) pending.platform_details_subtitle = data.platform_details_subtitle;
+  if (data.platform_details_subtitle_en !== undefined) pending.platform_details_subtitle_en = data.platform_details_subtitle_en;
+  if (data.platform_details_background_color !== undefined) pending.platform_details_background_color = data.platform_details_background_color;
+  if (data.platform_details_items !== undefined) pending.platform_details_items = data.platform_details_items;
+  if (data.platform_news_enabled !== undefined) pending.platform_news_enabled = data.platform_news_enabled;
+  if (data.platform_news_items !== undefined) pending.platform_news_items = data.platform_news_items;
+  if (data.platform_news_section_title !== undefined) pending.platform_news_section_title = data.platform_news_section_title;
+  if (data.platform_news_section_title_en !== undefined) pending.platform_news_section_title_en = data.platform_news_section_title_en;
+  if (data.add_balance_title !== undefined) pending.add_balance_title = data.add_balance_title;
+  if (data.add_balance_title_en !== undefined) pending.add_balance_title_en = data.add_balance_title_en;
+  if (data.add_balance_subtitle !== undefined) pending.add_balance_subtitle = data.add_balance_subtitle;
+  if (data.add_balance_subtitle_en !== undefined) pending.add_balance_subtitle_en = data.add_balance_subtitle_en;
+  if (data.add_balance_method_title !== undefined) pending.add_balance_method_title = data.add_balance_method_title;
+  if (data.add_balance_method_title_en !== undefined) pending.add_balance_method_title_en = data.add_balance_method_title_en;
+  if (data.add_balance_transfer_instruction !== undefined) pending.add_balance_transfer_instruction = data.add_balance_transfer_instruction;
+  if (data.add_balance_transfer_instruction_en !== undefined) pending.add_balance_transfer_instruction_en = data.add_balance_transfer_instruction_en;
+  if (data.add_balance_wallet_number !== undefined) pending.add_balance_wallet_number = data.add_balance_wallet_number;
+  if (data.add_balance_confirmation_note !== undefined) pending.add_balance_confirmation_note = data.add_balance_confirmation_note;
+  if (data.add_balance_confirmation_note_en !== undefined) pending.add_balance_confirmation_note_en = data.add_balance_confirmation_note_en;
+  if (data.add_balance_whatsapp_number !== undefined) pending.add_balance_whatsapp_number = data.add_balance_whatsapp_number;
+  if (data.add_balance_whatsapp_button_text !== undefined) pending.add_balance_whatsapp_button_text = data.add_balance_whatsapp_button_text;
+  if (data.add_balance_whatsapp_button_text_en !== undefined) pending.add_balance_whatsapp_button_text_en = data.add_balance_whatsapp_button_text_en;
+  if (data.add_balance_waiting_note !== undefined) pending.add_balance_waiting_note = data.add_balance_waiting_note;
+  if (data.add_balance_waiting_note_en !== undefined) pending.add_balance_waiting_note_en = data.add_balance_waiting_note_en;
+  if (data.copyright_overlay_style !== undefined) pending.copyright_overlay_style = data.copyright_overlay_style;
   const urbnitCols: Array<[keyof UrbnitHomepageUpdate, string | null | undefined]> = [
     ["hero_gallery_images", data.hero_gallery_images],
     ["hero_cta_primary_text", data.hero_cta_primary_text],
@@ -2698,171 +2461,9 @@ export async function updateHomepageSettings(data: {
     ["about_body_en", data.about_body_en],
   ];
   for (const [col, val] of urbnitCols) {
-    if (val === undefined) continue;
-    switch (col) {
-      case "hero_gallery_images":
-        await sql`UPDATE "HomepageSetting" SET hero_gallery_images = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_primary_text":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_primary_text = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_primary_text_en":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_primary_text_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_primary_href":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_primary_href = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_secondary_text":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_secondary_text = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_secondary_text_en":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_secondary_text_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "hero_cta_secondary_href":
-        await sql`UPDATE "HomepageSetting" SET hero_cta_secondary_href = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "top_banner_images":
-        await sql`UPDATE "HomepageSetting" SET top_banner_images = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_images":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_images = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_title":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_title_en":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_body":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_body = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_body_en":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_body_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_cta_text":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_cta_text = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_cta_text_en":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_cta_text_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_promo_cta_href":
-        await sql`UPDATE "HomepageSetting" SET courses_promo_cta_href = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_image_url":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_image_url = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_title":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_title_en":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_body":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_body = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_body_en":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_body_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_cta_text":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_cta_text = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_cta_text_en":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_cta_text_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_promo_cta_href":
-        await sql`UPDATE "HomepageSetting" SET packs_promo_cta_href = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_image_url":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_image_url = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_title":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_title_en":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_body":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_body = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_body_en":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_body_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_cta_text":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_cta_text = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "youtube_promo_cta_text_en":
-        await sql`UPDATE "HomepageSetting" SET youtube_promo_cta_text_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "faq_title":
-        await sql`UPDATE "HomepageSetting" SET faq_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "faq_title_en":
-        await sql`UPDATE "HomepageSetting" SET faq_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "faq_subtitle":
-        await sql`UPDATE "HomepageSetting" SET faq_subtitle = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "faq_subtitle_en":
-        await sql`UPDATE "HomepageSetting" SET faq_subtitle_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "footer_mission":
-        await sql`UPDATE "HomepageSetting" SET footer_mission = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "footer_mission_en":
-        await sql`UPDATE "HomepageSetting" SET footer_mission_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "instagram_url":
-        await sql`UPDATE "HomepageSetting" SET instagram_url = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "pinterest_url":
-        await sql`UPDATE "HomepageSetting" SET pinterest_url = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_page_title":
-        await sql`UPDATE "HomepageSetting" SET courses_page_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_page_title_en":
-        await sql`UPDATE "HomepageSetting" SET courses_page_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_page_intro":
-        await sql`UPDATE "HomepageSetting" SET courses_page_intro = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "courses_page_intro_en":
-        await sql`UPDATE "HomepageSetting" SET courses_page_intro_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_title":
-        await sql`UPDATE "HomepageSetting" SET packs_page_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_title_en":
-        await sql`UPDATE "HomepageSetting" SET packs_page_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_subtitle":
-        await sql`UPDATE "HomepageSetting" SET packs_page_subtitle = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_subtitle_en":
-        await sql`UPDATE "HomepageSetting" SET packs_page_subtitle_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_description":
-        await sql`UPDATE "HomepageSetting" SET packs_page_description = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "packs_page_description_en":
-        await sql`UPDATE "HomepageSetting" SET packs_page_description_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "about_title":
-        await sql`UPDATE "HomepageSetting" SET about_title = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "about_title_en":
-        await sql`UPDATE "HomepageSetting" SET about_title_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "about_body":
-        await sql`UPDATE "HomepageSetting" SET about_body = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      case "about_body_en":
-        await sql`UPDATE "HomepageSetting" SET about_body_en = ${val}, updated_at = NOW() WHERE id = 'default'`;
-        break;
-      default:
-        break;
-    }
+    if (val !== undefined) pending[col] = val;
   }
+  await batchUpdateHomepageColumns(pending);
   bustCache("homepage-settings", "homepage-faqs", "teachers-homepage");
 }
 
