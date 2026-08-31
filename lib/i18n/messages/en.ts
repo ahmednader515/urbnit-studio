@@ -1264,5 +1264,6 @@ export const enMessages: Messages = {
     platformSubscriptions: "Platform subscriptions",
     subscribedStudents: "Subscribed students",
     platformStore: "Platform store",
+    platformPacks: "Packs",
   },
 };

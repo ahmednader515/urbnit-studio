@@ -3777,25 +3777,37 @@ async function getCoursesPublishedUncached(
   withRatings: boolean,
 ): Promise<(Course & { category?: Category })[]> {
   if (withRatings) await ensureLessonRatingsSchema();
-  const ratingCols = withRatings
-    ? sql`, ${courseRatingSelectSql()}`
-    : sql``;
   if (!withCategory) {
-    const rows = await sql`
-      SELECT c.* ${ratingCols}
-      FROM "Course" c
-      WHERE c.is_published = true
-      ORDER BY c."order" ASC, c.created_at DESC
-    `;
+    const rows = withRatings
+      ? await sql`
+          SELECT c.*, ${courseRatingSelectSql()}
+          FROM "Course" c
+          WHERE c.is_published = true
+          ORDER BY c."order" ASC, c.created_at DESC
+        `
+      : await sql`
+          SELECT c.*
+          FROM "Course" c
+          WHERE c.is_published = true
+          ORDER BY c."order" ASC, c.created_at DESC
+        `;
     return rowsToCamel(rows as Record<string, unknown>[]) as (Course & { category?: Category })[];
   }
-  const rows = await sql`
-    SELECT c.* ${ratingCols}, cat.id as cat_id, cat.name as cat_name, cat.name_ar as cat_name_ar, cat.slug as cat_slug
-    FROM "Course" c
-    LEFT JOIN "Category" cat ON c.category_id = cat.id
-    WHERE c.is_published = true
-    ORDER BY c."order" ASC, c.created_at DESC
-  `;
+  const rows = withRatings
+    ? await sql`
+        SELECT c.*, ${courseRatingSelectSql()}, cat.id as cat_id, cat.name as cat_name, cat.name_ar as cat_name_ar, cat.slug as cat_slug
+        FROM "Course" c
+        LEFT JOIN "Category" cat ON c.category_id = cat.id
+        WHERE c.is_published = true
+        ORDER BY c."order" ASC, c.created_at DESC
+      `
+    : await sql`
+        SELECT c.*, cat.id as cat_id, cat.name as cat_name, cat.name_ar as cat_name_ar, cat.slug as cat_slug
+        FROM "Course" c
+        LEFT JOIN "Category" cat ON c.category_id = cat.id
+        WHERE c.is_published = true
+        ORDER BY c."order" ASC, c.created_at DESC
+      `;
   return (rows as Record<string, unknown>[]).map((r) => {
     const category = r.cat_id
       ? rowToCamel({ id: r.cat_id, name: r.cat_name, name_ar: r.cat_name_ar, slug: r.cat_slug })

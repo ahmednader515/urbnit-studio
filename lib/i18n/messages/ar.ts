@@ -1262,5 +1262,6 @@ export const arMessages: Messages = {
     platformSubscriptions: "إنشاء اشتراكات المنصة",
     subscribedStudents: "الطلاب المشتركين",
     platformStore: "متجر المنصة",
+    platformPacks: "الحزم",
   },
 };
