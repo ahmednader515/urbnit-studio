@@ -380,6 +380,8 @@ export interface Course {
   duration: string | null;
   level: string | null;
   is_published: boolean;
+  /** course | workshop */
+  kind?: string | null;
   order: number;
   category_id: string | null;
   created_by_id: string | null;

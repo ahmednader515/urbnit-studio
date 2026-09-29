@@ -8,14 +8,19 @@ import {
   listStorePurchasesForAdmin,
   getStoreSalesStats,
 } from "@/lib/db";
-import { getServerTranslator } from "@/lib/i18n/server";
 import { StoreAdminClient } from "./StoreAdminClient";
+
+function shownPageTitle(value: string | null | undefined, fallback: string) {
+  const text = value?.trim() || "";
+  if (!text || text === "Packs" || text === "الحزم" || text === "Library Tools" || text === "مكتبة الأدوات") {
+    return fallback;
+  }
+  return text;
+}
 
 export default async function StoreDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "ADMIN") redirect("/dashboard");
-
-  const t = await getServerTranslator();
 
   const [enabled, homepage] = await Promise.all([
     getStoreFeatureEnabled(),
@@ -36,17 +41,22 @@ export default async function StoreDashboardPage() {
     })),
   ]);
 
-  const initialHomeStoreTitle =
-    homepage?.storeSectionTitle?.trim() || t("dashboard.storeAdminDefaults.sectionTitleFallback");
-  const initialHomeStoreDescription =
-    homepage?.storeSectionDescription?.trim() ||
-    t("dashboard.storeAdminDefaults.sectionDescriptionFallback");
+  const initialHomeStoreTitle = shownPageTitle(homepage?.packsPageTitle, "المصادر");
+  const initialHomeStoreTitleEn = shownPageTitle(homepage?.packsPageTitleEn, "Resources");
+  const initialHomeStoreSubtitle = homepage?.packsPageSubtitle?.trim() || "";
+  const initialHomeStoreSubtitleEn = homepage?.packsPageSubtitleEn?.trim() || "";
+  const initialHomeStoreDescription = homepage?.packsPageDescription?.trim() || "";
+  const initialHomeStoreDescriptionEn = homepage?.packsPageDescriptionEn?.trim() || "";
 
   return (
     <StoreAdminClient
       initialEnabled={enabled}
       initialHomeStoreTitle={initialHomeStoreTitle}
+      initialHomeStoreTitleEn={initialHomeStoreTitleEn}
+      initialHomeStoreSubtitle={initialHomeStoreSubtitle}
+      initialHomeStoreSubtitleEn={initialHomeStoreSubtitleEn}
       initialHomeStoreDescription={initialHomeStoreDescription}
+      initialHomeStoreDescriptionEn={initialHomeStoreDescriptionEn}
       initialProducts={products}
       initialPurchases={purchases}
       initialStats={stats}

@@ -20,7 +20,7 @@ export default async function DashboardCoursesPage() {
       ? await getCoursesWithCountsForCreator(session.user.id)
       : await getCoursesWithCounts();
 
-  const coursesPlain = courses.map((c) => {
+  const coursesPlain = courses.filter((c) => String((c as { kind?: string | null }).kind ?? "course") !== "workshop").map((c) => {
     const row = c as Record<string, unknown>;
     const cat = row.category as { id: string; name: string; nameAr?: string | null; slug: string } | null | undefined;
     const rawImg = row.imageUrl ?? row.image_url;

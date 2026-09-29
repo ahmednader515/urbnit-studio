@@ -48,11 +48,17 @@ export async function SiteFooter({ settings }: { settings?: HomepageSetting | nu
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex flex-col gap-2">
+              <Link href="/portfolio" className="text-neutral-400 hover:text-white">
+                {locale === "ar" ? "الأعمال" : "Portfolio"}
+              </Link>
               <Link href="/courses" className="text-neutral-400 hover:text-white">
                 {locale === "ar" ? "الدورات" : "Courses"}
               </Link>
-              <Link href="/packs" className="text-neutral-400 hover:text-white">
-                {locale === "ar" ? "الحزم" : "Packs"}
+              <Link href="/workshops" className="text-neutral-400 hover:text-white">
+                {locale === "ar" ? "ورش العمل" : "Workshops"}
+              </Link>
+              <Link href="/resources" className="text-neutral-400 hover:text-white">
+                {locale === "ar" ? "المصادر" : "Resources"}
               </Link>
               <Link href="/about" className="text-neutral-400 hover:text-white">
                 {locale === "ar" ? "من نحن" : "About"}

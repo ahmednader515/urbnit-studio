@@ -1,17 +1,15 @@
-import { getCoursesPublished, getHomepageSettings, getTeacherIdsExcludedFromPublicCourseLists, getUserById } from "@/lib/db";
+import { getCoursesPublished, getTeacherIdsExcludedFromPublicCourseLists, getUserById } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getLocaleFromCookie } from "@/lib/i18n/server";
-import { pickLocalizedText } from "@/lib/i18n/localized-field";
 import { CoursesPageGrid } from "@/components/courses/CoursesPageGrid";
 
 export const revalidate = 60;
 
-type Props = { searchParams: Promise<{ category?: string; teacher?: string }> };
+type Props = { searchParams: Promise<{ teacher?: string }> };
 
-export default async function CoursesPage({ searchParams }: Props) {
-  const [locale, settings, { category: categorySlug, teacher: teacherId }] = await Promise.all([
+export default async function WorkshopsPage({ searchParams }: Props) {
+  const [locale, { teacher: teacherId }] = await Promise.all([
     getLocaleFromCookie(),
-    getHomepageSettings().catch(() => null),
     searchParams,
   ]);
 
@@ -21,7 +19,8 @@ export default async function CoursesPage({ searchParams }: Props) {
   } catch {
     /* DB not connected */
   }
-  courses = courses.filter((c) => (c as { kind?: string | null }).kind !== "workshop");
+
+  courses = courses.filter((c) => (c as { kind?: string | null }).kind === "workshop");
 
   const hideTeacherCreators = await getTeacherIdsExcludedFromPublicCourseLists();
 
@@ -29,15 +28,11 @@ export default async function CoursesPage({ searchParams }: Props) {
   const tid = teacherId?.trim();
   if (tid) {
     const u = await getUserById(tid).catch(() => null);
-    if (!u || u.role !== "TEACHER") redirect("/courses");
+    if (!u || u.role !== "TEACHER") redirect("/workshops");
     teacherName = u.name ?? null;
   }
 
-  let filtered =
-    categorySlug?.trim()
-      ? courses.filter((c) => (c as { category?: { slug?: string } }).category?.slug === categorySlug.trim())
-      : courses;
-
+  let filtered = courses;
   if (tid) {
     filtered = filtered.filter((c) => {
       const row = c as { createdById?: string | null; created_by_id?: string | null };
@@ -52,12 +47,11 @@ export default async function CoursesPage({ searchParams }: Props) {
     });
   }
 
-  const pageTitle =
-    teacherName
-      ? `${locale === "ar" ? "دورات" : "Courses by"} ${teacherName}`
-      : pickLocalizedText(locale, settings?.coursesPageTitle, settings?.coursesPageTitleEn) || (locale === "ar" ? "الدورات" : "Courses");
-
-  const pageIntro = pickLocalizedText(locale, settings?.coursesPageIntro, settings?.coursesPageIntroEn) || "";
+  const pageTitle = teacherName
+    ? `${locale === "ar" ? "ورش" : "Workshops by"} ${teacherName}`
+    : locale === "ar"
+      ? "ورش العمل"
+      : "Workshops";
 
   const gridCourses = filtered.map((c) => {
     const row = c as typeof c & {
@@ -88,15 +82,19 @@ export default async function CoursesPage({ searchParams }: Props) {
     <section className="bg-[#F5F5F5] px-4 py-12 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-4xl font-bold text-neutral-900 sm:text-5xl">{pageTitle}</h1>
-        {pageIntro ? <p className="mt-4 max-w-3xl text-lg text-neutral-600">{pageIntro}</p> : null}
+        <p className="mt-4 max-w-3xl text-lg text-neutral-600">
+          {locale === "ar"
+            ? "ورش عمل تتبع نفس نظام الدورات: دروس، اختبارات، وتسجيل."
+            : "Workshops use the same course system: lessons, quizzes, and enrollment."}
+        </p>
 
         {gridCourses.length > 0 ? (
           <div className="mt-12">
-            <CoursesPageGrid courses={gridCourses} />
+            <CoursesPageGrid courses={gridCourses} afterEnrollHref="/workshops" />
           </div>
         ) : (
           <div className="mt-12 rounded-xl border border-dashed border-neutral-300 bg-white p-12 text-center text-neutral-500">
-            {locale === "ar" ? "لا توجد دورات منشورة حالياً." : "No published courses yet."}
+            {locale === "ar" ? "لا توجد ورش منشورة حالياً." : "No published workshops yet."}
           </div>
         )}
       </div>

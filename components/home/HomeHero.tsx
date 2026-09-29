@@ -28,16 +28,11 @@ export function HomeHero({
 }) {
   const title = pickLocalizedText(locale, settings.heroTitle, settings.heroTitleEn);
   const subtitle = pickLocalizedText(locale, settings.heroSlogan, settings.heroSloganEn);
-  const ctaPrimary = pickLocalizedText(
-    locale,
-    settings.heroCtaPrimaryText,
-    settings.heroCtaPrimaryTextEn,
-  );
-  const ctaSecondary = pickLocalizedText(
-    locale,
-    settings.heroCtaSecondaryText,
-    settings.heroCtaSecondaryTextEn,
-  );
+  const heroButtons = [
+    { href: "/courses", label: locale === "ar" ? "الدورات" : "Courses", primary: true },
+    { href: "/workshops", label: locale === "ar" ? "ورش العمل" : "Workshops", primary: false },
+    { href: "/resources", label: locale === "ar" ? "المصادر" : "Resources", primary: false },
+  ];
   const gallery = resolveHeroGalleryImages(settings.heroGalleryImages, HERO_BG_LAYOUT.length);
   const [teacher1, teacher2] = resolveHeroTeacherImages(settings);
 
@@ -69,16 +64,15 @@ export function HomeHero({
             {subtitle}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            {ctaPrimary && settings.heroCtaPrimaryHref ? (
-              <Link href={settings.heroCtaPrimaryHref} className={urbnitBtnPrimary}>
-                {ctaPrimary}
+            {heroButtons.map((button) => (
+              <Link
+                key={button.href}
+                href={button.href}
+                className={button.primary ? urbnitBtnPrimary : urbnitBtnOutline}
+              >
+                {button.label}
               </Link>
-            ) : null}
-            {ctaSecondary && settings.heroCtaSecondaryHref ? (
-              <Link href={settings.heroCtaSecondaryHref} className={urbnitBtnOutline}>
-                {ctaSecondary}
-              </Link>
-            ) : null}
+            ))}
           </div>
         </div>
 

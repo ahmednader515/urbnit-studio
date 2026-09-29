@@ -76,11 +76,11 @@ function UserMenu() {
 export function Header({
   platformName,
   headerLogoUrl,
-  facebookUrl,
+  youtubeUrl,
 }: {
   platformName?: string | null;
   headerLogoUrl?: string | null;
-  facebookUrl?: string | null;
+  youtubeUrl?: string | null;
 }) {
   const { data: session, status } = useSession();
   const t = useT();
@@ -99,21 +99,27 @@ export function Header({
           />
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-x-3 gap-y-1 md:flex lg:gap-x-5">
+          <Link href="/portfolio" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
+            {t("common.portfolio", "Portfolio")}
+          </Link>
           <Link href="/courses" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
             {t("common.courses", "Courses")}
           </Link>
-          <Link href="/packs" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
-            {t("common.packs", "Packs")}
+          <Link href="/workshops" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
+            {t("common.workshops", "Workshops")}
           </Link>
-          {facebookUrl ? (
+          <Link href="/resources" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
+            {t("common.resources", "Resources")}
+          </Link>
+          {youtubeUrl ? (
             <a
-              href={facebookUrl}
+              href={youtubeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]"
             >
-              {t("common.facebook", "Facebook")}
+              {t("common.youtube", "YouTube")}
             </a>
           ) : null}
           <Link href="/about" className="text-sm font-medium text-neutral-800 hover:text-[#0066FF]">
@@ -139,15 +145,21 @@ export function Header({
       </div>
 
       <nav className="flex gap-4 overflow-x-auto border-t border-neutral-100 px-4 py-2 md:hidden">
+        <Link href="/portfolio" className="whitespace-nowrap text-sm font-medium text-neutral-800">
+          {t("common.portfolio", "Portfolio")}
+        </Link>
         <Link href="/courses" className="whitespace-nowrap text-sm font-medium text-neutral-800">
           {t("common.courses", "Courses")}
         </Link>
-        <Link href="/packs" className="whitespace-nowrap text-sm font-medium text-neutral-800">
-          {t("common.packs", "Packs")}
+        <Link href="/workshops" className="whitespace-nowrap text-sm font-medium text-neutral-800">
+          {t("common.workshops", "Workshops")}
         </Link>
-        {facebookUrl ? (
-          <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-sm font-medium text-neutral-800">
-            {t("common.facebook", "Facebook")}
+        <Link href="/resources" className="whitespace-nowrap text-sm font-medium text-neutral-800">
+          {t("common.resources", "Resources")}
+        </Link>
+        {youtubeUrl ? (
+          <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap text-sm font-medium text-neutral-800">
+            {t("common.youtube", "YouTube")}
           </a>
         ) : null}
         <Link href="/about" className="whitespace-nowrap text-sm font-medium text-neutral-800">

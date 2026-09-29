@@ -3,8 +3,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadToR2, isR2Configured, getMissingR2EnvVars } from "@/lib/r2";
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPE = "application/pdf";
+const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+
+function productFileKind(file: File): "pdf" | "zip" | null {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  if (type === "application/pdf" || name.endsWith(".pdf")) return "pdf";
+  if (
+    type === "application/zip" ||
+    type === "application/x-zip-compressed" ||
+    type === "application/x-zip" ||
+    name.endsWith(".zip")
+  ) {
+    return "zip";
+  }
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -38,27 +52,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "لم يُرفع أي ملف" }, { status: 400 });
   }
 
-  if (file.type !== ALLOWED_TYPE) {
+  const kind = productFileKind(file);
+  if (!kind) {
     return NextResponse.json(
-      { error: "نوع الملف غير مدعوم. استخدم ملف PDF فقط." },
+      { error: "نوع الملف غير مدعوم. استخدم ملف PDF أو ZIP فقط." },
       { status: 400 }
     );
   }
 
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: "حجم الملف أكبر من 10 ميجابايت" },
+      { error: "حجم الملف أكبر من 50 ميجابايت" },
       { status: 400 }
     );
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
-  const safeExt = ext === "pdf" ? "pdf" : "pdf";
-  const key = `pdfs/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${safeExt}`;
+  const contentType = kind === "pdf" ? "application/pdf" : "application/zip";
+  const key = `resources/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${kind}`;
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { url: uploadedUrl } = await uploadToR2(buffer, key, file.type);
+    const { url: uploadedUrl } = await uploadToR2(buffer, key, contentType);
 
     const baseUrl = (uploadedUrl ? null : process.env.R2_PUBLIC_URL?.trim()?.replace(/\/$/, "")) || null;
     const url = uploadedUrl || (baseUrl ? `${baseUrl}/${key}` : null);

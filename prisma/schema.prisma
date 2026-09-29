@@ -68,6 +68,8 @@ model Course {
   duration         String?  // مثل "4 أسابيع" أو "12 ساعة"
   level            String?  // beginner | intermediate | advanced
   isPublished      Boolean  @default(false) @map("is_published")
+  /// course | workshop — workshops are normal courses listed on their own page
+  kind             String   @default("course") @db.VarChar(20)
   order            Int      @default(0)
   maxQuizAttempts  Int?     @map("max_quiz_attempts") // حد مرات دخول الاختبار في الكورس (null = غير محدود)
   categoryId       String?  @map("category_id")

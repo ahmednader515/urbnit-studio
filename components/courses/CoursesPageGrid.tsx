@@ -25,7 +25,14 @@ function normalizePrice(price: number | string | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function CourseEnrollButton({ courseId, price }: { courseId: string; price: number }) {
+function CourseEnrollButton({
+  courseId,
+  successHref = "/courses",
+}: {
+  courseId: string;
+  price: number;
+  successHref?: string;
+}) {
   const locale = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -35,7 +42,7 @@ function CourseEnrollButton({ courseId, price }: { courseId: string; price: numb
     const res = await fetch(`/api/enroll?courseId=${encodeURIComponent(courseId)}`, { method: "POST" });
     setLoading(false);
     if (res.ok) {
-      router.push(`/courses`);
+      router.push(successHref);
       router.refresh();
     } else {
       const data = await res.json().catch(() => ({}));
@@ -50,7 +57,13 @@ function CourseEnrollButton({ courseId, price }: { courseId: string; price: numb
   );
 }
 
-export function CoursesPageGrid({ courses }: { courses: CourseGridItem[] }) {
+export function CoursesPageGrid({
+  courses,
+  afterEnrollHref = "/courses",
+}: {
+  courses: CourseGridItem[];
+  afterEnrollHref?: string;
+}) {
   const locale = useLocale();
 
   return (
@@ -95,7 +108,7 @@ export function CoursesPageGrid({ courses }: { courses: CourseGridItem[] }) {
               {desc ? <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-600">{desc}</p> : null}
               <p className="mt-4 text-lg font-bold text-neutral-900">$ {price.toFixed(0)}</p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
-                <CourseEnrollButton courseId={course.id} price={price} />
+                <CourseEnrollButton courseId={course.id} price={price} successHref={afterEnrollHref} />
                 <Link href={href} className={urbnitLinkArrow}>
                   {locale === "ar" ? "اعرف المزيد" : "Learn more"} <span aria-hidden>→</span>
                 </Link>

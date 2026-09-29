@@ -132,7 +132,7 @@ export default async function RootLayout({
             <Header
               platformName={platformName}
               headerLogoUrl={headerLogoUrl}
-              facebookUrl={homepageSettings?.facebookUrl}
+              youtubeUrl={homepageSettings?.youtubeUrl}
             />
             <main className="flex-1">{children}</main>
             <SiteFooter settings={homepageSettings} />

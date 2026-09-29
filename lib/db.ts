@@ -2548,6 +2548,7 @@ export async function setStoreFeatureEnabled(enabled: boolean): Promise<void> {
       store_enabled = EXCLUDED.store_enabled,
       updated_at = NOW()
   `;
+  bustCache("homepage-settings");
 }
 
 let storeProductsSchemaEnsured = false;
@@ -3377,6 +3378,7 @@ async function getCoursesPublishedUncached(
   withCategory: boolean,
   withRatings: boolean,
 ): Promise<(Course & { category?: Category })[]> {
+  await ensureCourseKindColumn();
   if (withRatings) await ensureLessonRatingsSchema();
   if (!withCategory) {
     const rows = withRatings
@@ -3421,7 +3423,7 @@ async function getCoursesPublishedUncached(
 
 const getCoursesPublishedDataCache = unstable_cache(
   getCoursesPublishedUncached,
-  ["courses-published"],
+  ["courses-published-kind"],
   { revalidate: 120, tags: ["courses-published"] },
 );
 
@@ -3451,6 +3453,7 @@ export async function getCoursesWithCounts(): Promise<
     }
   >
 > {
+  await ensureCourseKindColumn();
   await ensureLessonRatingsSchema();
   const rows = await sql`
     SELECT c.*,
@@ -3551,6 +3554,16 @@ export async function courseExistsBySlug(slug: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+async function ensureCourseKindColumn(): Promise<void> {
+  return ensureOnce("ensureCourseKindColumn", async () => {
+    try {
+      await sql`ALTER TABLE "Course" ADD COLUMN IF NOT EXISTS kind VARCHAR(20) NOT NULL DEFAULT 'course'`;
+    } catch {
+      /* DDL may be unavailable */
+    }
+  });
+}
+
 async function ensureCourseBilingualColumns(): Promise<void> {
   return ensureOnce("ensureCourseBilingualColumns", async () => {
     try {
@@ -3577,8 +3590,10 @@ export async function createCourse(data: {
   max_quiz_attempts?: number | null;
   category_id?: string | null;
   accepts_homework?: boolean;
+  kind?: "course" | "workshop" | null;
 }): Promise<Course> {
   await ensureCourseBilingualColumns();
+  await ensureCourseKindColumn();
   const id = generateId();
   const catId = data.category_id ?? null;
   const acceptsHomework = data.accepts_homework ?? false;
@@ -3616,6 +3631,14 @@ export async function createCourse(data: {
   const row = rows?.[0] as Record<string, unknown> | undefined;
   const c = row ? rowToCamel(row) as Course : null;
   if (!c) throw new Error("فشل إنشاء الدورة");
+  if (data.kind === "workshop") {
+    try {
+      await sql`UPDATE "Course" SET kind = 'workshop' WHERE id = ${id}`;
+      c.kind = "workshop";
+    } catch {
+      /* kind column unavailable */
+    }
+  }
   bustCache("courses-published");
   return c;
 }

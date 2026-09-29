@@ -39,14 +39,22 @@ type SalesStats = {
 export function StoreAdminClient({
   initialEnabled,
   initialHomeStoreTitle,
+  initialHomeStoreTitleEn,
+  initialHomeStoreSubtitle,
+  initialHomeStoreSubtitleEn,
   initialHomeStoreDescription,
+  initialHomeStoreDescriptionEn,
   initialProducts,
   initialPurchases,
   initialStats,
 }: {
   initialEnabled: boolean;
   initialHomeStoreTitle: string;
+  initialHomeStoreTitleEn: string;
+  initialHomeStoreSubtitle: string;
+  initialHomeStoreSubtitleEn: string;
   initialHomeStoreDescription: string;
+  initialHomeStoreDescriptionEn: string;
   initialProducts: StoreProduct[];
   initialPurchases: AdminPurchaseRow[];
   initialStats: SalesStats;
@@ -75,6 +83,8 @@ export function StoreAdminClient({
   const [badgeText, setBadgeText] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState("");
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileError, setFileError] = useState("");
   const [searchStudent, setSearchStudent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -85,14 +95,31 @@ export function StoreAdminClient({
   const [editPdfUrl, setEditPdfUrl] = useState("");
   const [editImageUploading, setEditImageUploading] = useState(false);
   const [editImageError, setEditImageError] = useState("");
+  const [editFileUploading, setEditFileUploading] = useState(false);
+  const [editFileError, setEditFileError] = useState("");
   const [homeStoreTitle, setHomeStoreTitle] = useState(initialHomeStoreTitle);
+  const [homeStoreTitleEn, setHomeStoreTitleEn] = useState(initialHomeStoreTitleEn);
+  const [homeStoreSubtitle, setHomeStoreSubtitle] = useState(initialHomeStoreSubtitle);
+  const [homeStoreSubtitleEn, setHomeStoreSubtitleEn] = useState(initialHomeStoreSubtitleEn);
   const [homeStoreDescription, setHomeStoreDescription] = useState(initialHomeStoreDescription);
+  const [homeStoreDescriptionEn, setHomeStoreDescriptionEn] = useState(initialHomeStoreDescriptionEn);
   const [homeCopySaving, setHomeCopySaving] = useState(false);
 
   useEffect(() => {
     setHomeStoreTitle(initialHomeStoreTitle);
+    setHomeStoreTitleEn(initialHomeStoreTitleEn);
+    setHomeStoreSubtitle(initialHomeStoreSubtitle);
+    setHomeStoreSubtitleEn(initialHomeStoreSubtitleEn);
     setHomeStoreDescription(initialHomeStoreDescription);
-  }, [initialHomeStoreTitle, initialHomeStoreDescription]);
+    setHomeStoreDescriptionEn(initialHomeStoreDescriptionEn);
+  }, [
+    initialHomeStoreTitle,
+    initialHomeStoreTitleEn,
+    initialHomeStoreSubtitle,
+    initialHomeStoreSubtitleEn,
+    initialHomeStoreDescription,
+    initialHomeStoreDescriptionEn,
+  ]);
 
   const reload = useCallback(async () => {
     const res = await fetch("/api/dashboard/store-products", { credentials: "include" });
@@ -142,7 +169,11 @@ export function StoreAdminClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: trimmedHomeTitle,
+        titleEn: homeStoreTitleEn.trim(),
+        subtitle: homeStoreSubtitle.trim(),
+        subtitleEn: homeStoreSubtitleEn.trim(),
         description: homeStoreDescription.trim(),
+        descriptionEn: homeStoreDescriptionEn.trim(),
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -200,6 +231,27 @@ export function StoreAdminClient({
     setPdfUrl("");
     await reload();
     router.refresh();
+  }
+
+  async function uploadProductFile(file: File | undefined, target: "create" | "edit") {
+    if (!file) return;
+    const setBusy = target === "create" ? setFileUploading : setEditFileUploading;
+    const setErr = target === "create" ? setFileError : setEditFileError;
+    const setUrl = target === "create" ? setPdfUrl : setEditPdfUrl;
+    setErr("");
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/upload/pdf", { method: "POST", body: fd, credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) setUrl(data.url);
+      else setErr(data.error ?? t(`${S}.uploadFailed`));
+    } catch {
+      setErr(t(`${S}.connectionFailed`));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onImageFile(file: File | undefined) {
@@ -356,19 +408,65 @@ export function StoreAdminClient({
         <p className="mt-2 text-sm text-[var(--color-muted)]">{t(`${S}.pageIntro`)}</p>
         <form onSubmit={(e) => void saveHomeStoreCopy(e)} className="mt-5 space-y-3 rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-background)] p-4">
           <p className="text-sm font-semibold text-[var(--color-foreground)]">{t(`${S}.homeSectionLabel`)}</p>
-          <input
-            value={homeStoreTitle}
-            onChange={(e) => setHomeStoreTitle(e.target.value)}
-            placeholder={t(`${S}.homeTitlePlaceholder`)}
-            className="w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-          />
-          <textarea
-            value={homeStoreDescription}
-            onChange={(e) => setHomeStoreDescription(e.target.value)}
-            placeholder={t(`${S}.homeDescPlaceholder`)}
-            rows={4}
-            className="w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-          />
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeTitleArLabel`, "Title (Arabic)")}
+            <input
+              value={homeStoreTitle}
+              onChange={(e) => setHomeStoreTitle(e.target.value)}
+              placeholder={t(`${S}.homeTitlePlaceholder`)}
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeTitleEnLabel`, "Title (English)")}
+            <input
+              value={homeStoreTitleEn}
+              onChange={(e) => setHomeStoreTitleEn(e.target.value)}
+              placeholder={t(`${S}.homeTitlePlaceholderEn`, "English title")}
+              dir="ltr"
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeSubtitleArLabel`, "Subtitle (Arabic)")}
+            <textarea
+              value={homeStoreSubtitle}
+              onChange={(e) => setHomeStoreSubtitle(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeSubtitleEnLabel`, "Subtitle (English)")}
+            <textarea
+              value={homeStoreSubtitleEn}
+              onChange={(e) => setHomeStoreSubtitleEn(e.target.value)}
+              rows={3}
+              dir="ltr"
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeDescArLabel`, "Description (Arabic)")}
+            <textarea
+              value={homeStoreDescription}
+              onChange={(e) => setHomeStoreDescription(e.target.value)}
+              placeholder={t(`${S}.homeDescPlaceholder`)}
+              rows={4}
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium text-[var(--color-foreground)]">
+            {t(`${S}.homeDescEnLabel`, "Description (English)")}
+            <textarea
+              value={homeStoreDescriptionEn}
+              onChange={(e) => setHomeStoreDescriptionEn(e.target.value)}
+              placeholder={t(`${S}.homeDescPlaceholderEn`, "English description")}
+              rows={4}
+              dir="ltr"
+              className="mt-1 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-normal"
+            />
+          </label>
           <button
             type="submit"
             disabled={homeCopySaving}
@@ -528,13 +626,30 @@ export function StoreAdminClient({
           />
           <p className="mt-1 text-xs text-[var(--color-muted)]">{t(`${S}.costHint`)}</p>
         </div>
-        <input
-          required
-          value={pdfUrl}
-          onChange={(e) => setPdfUrl(e.target.value)}
-          placeholder={t(`${S}.pdfUrlPlaceholder`)}
-          className="w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2"
-        />
+        <div>
+          <label className="inline-flex cursor-pointer rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-border)]/50">
+            {fileUploading ? t(`${S}.uploadProductFileBusy`) : t(`${S}.uploadProductFileIdle`)}
+            <input
+              type="file"
+              accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed"
+              className="hidden"
+              disabled={fileUploading}
+              onChange={(e) => {
+                void uploadProductFile(e.target.files?.[0], "create");
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {pdfUrl ? <p className="mt-2 truncate text-xs text-[var(--color-muted)]">{pdfUrl}</p> : null}
+          {fileError ? <p className="mt-1 text-xs text-red-500">{fileError}</p> : null}
+          <input
+            required
+            value={pdfUrl}
+            onChange={(e) => setPdfUrl(e.target.value)}
+            placeholder={t(`${S}.pdfUrlPlaceholder`)}
+            className="mt-2 w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2"
+          />
+        </div>
         <button disabled={loading} className="rounded-[var(--radius-btn)] bg-[var(--color-primary)] px-4 py-2 text-sm text-white disabled:opacity-50">{loading ? t(`${S}.saveProductBusy`) : t(`${S}.saveProductIdle`)}</button>
       </form>
 
@@ -586,6 +701,22 @@ export function StoreAdminClient({
               placeholder={t(`${S}.costPlaceholder`)}
               className="w-full rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2"
             />
+            <div>
+              <label className="inline-flex cursor-pointer rounded-[var(--radius-btn)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-border)]/50">
+                {editFileUploading ? t(`${S}.uploadProductFileBusy`) : t(`${S}.uploadProductFileIdle`)}
+                <input
+                  type="file"
+                  accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed"
+                  className="hidden"
+                  disabled={editFileUploading}
+                  onChange={(e) => {
+                    void uploadProductFile(e.target.files?.[0], "edit");
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {editFileError ? <p className="mt-1 text-xs text-red-500">{editFileError}</p> : null}
+            </div>
             <input
               required
               value={editPdfUrl}

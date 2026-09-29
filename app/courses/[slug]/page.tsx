@@ -18,6 +18,7 @@ import {
 import { EnrollButton } from "./EnrollButton";
 import { getLocaleFromCookie, getServerTranslator } from "@/lib/i18n/server";
 import { pickLocalizedText } from "@/lib/i18n/localized-field";
+import { resolveHeroTeacherImages } from "@/lib/homepage-urbnit";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -152,6 +153,7 @@ export default async function CoursePage({ params }: Props) {
   };
 
   const isGuest = !session;
+  const [heroMainImage] = resolveHeroTeacherImages(homepageSettings);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -191,9 +193,9 @@ export default async function CoursePage({ params }: Props) {
             <div className="flex flex-col items-center text-center">
               <div className="relative mb-4">
                 <img
-                  src={homepageSettings.teacherImageUrl?.trim() || "/instructor.png"}
+                  src={heroMainImage}
                   alt={pickLocalizedText(locale, homepageSettings.heroTitle, homepageSettings.heroTitleEn) || "المدرس"}
-                  className="h-32 w-32 border-2 border-black border-dotted object-cover"
+                  className="h-32 w-32 border-2 border-black border-dotted object-cover object-top"
                 />
                 <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full border-4 border-[var(--color-surface)] bg-[var(--color-success)]" />
                 <img

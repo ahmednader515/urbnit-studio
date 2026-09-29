@@ -12,7 +12,13 @@ type QuestionRow = { type: "MULTIPLE_CHOICE" | "TRUE_FALSE"; questionText: strin
 type QuizRow = { title: string; timeLimitMinutes: string; questions: QuestionRow[] };
 type ContentOrderEntry = { type: "lesson"; index: number } | { type: "quiz"; index: number };
 
-export function CreateCourseForm() {
+export function CreateCourseForm({
+  kind = "course",
+  redirectTo,
+}: {
+  kind?: "course" | "workshop";
+  redirectTo?: string;
+} = {}) {
   const router = useRouter();
   const t = useT();
   const Cf = "dashboard.courseForm";
@@ -263,6 +269,7 @@ export function CreateCourseForm() {
         })),
       quizzes: validQuizzes,
       contentOrder: filteredContentOrder,
+      kind,
     };
     const res = await fetch("/api/courses", {
       method: "POST",
@@ -274,7 +281,7 @@ export function CreateCourseForm() {
       setError(data.error ?? t(`${Cf}.createCourseFailed`));
       return;
     }
-    router.push("/dashboard");
+    router.push(redirectTo ?? (kind === "workshop" ? "/dashboard/workshops" : "/dashboard/courses"));
     router.refresh();
     } finally {
       setLoading(false);

@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     categoryNameAr?: string;
     categoryNameEn?: string;
     acceptsHomework?: boolean;
+    kind?: string;
     lessons?: LessonInput[];
     quizzes?: QuizInput[];
     contentOrder?: Array<{ type: "lesson"; index: number } | { type: "quiz"; index: number }>;
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
       max_quiz_attempts: body.maxQuizAttempts ?? null,
       category_id: categoryId,
       accepts_homework: !!body.acceptsHomework,
+      kind: body.kind === "workshop" ? "workshop" : "course",
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

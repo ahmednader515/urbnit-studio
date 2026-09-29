@@ -14,7 +14,8 @@ export function HomePacksPromo({
   const title = pickLocalizedText(locale, settings.packsPromoTitle, settings.packsPromoTitleEn);
   const body = pickLocalizedText(locale, settings.packsPromoBody, settings.packsPromoBodyEn);
   const cta = pickLocalizedText(locale, settings.packsPromoCtaText, settings.packsPromoCtaTextEn);
-  const href = settings.packsPromoCtaHref || "/packs";
+  const rawHref = settings.packsPromoCtaHref || "/resources";
+  const href = rawHref === "/packs" || rawHref === "/store" ? "/resources" : rawHref;
   const imageUrl = resolvePacksPromoImageUrl(settings.packsPromoImageUrl);
 
   return (

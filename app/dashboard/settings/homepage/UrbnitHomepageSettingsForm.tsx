@@ -266,6 +266,7 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
           heroCtaSecondaryText: s.heroCtaSecondaryText,
           heroCtaSecondaryTextEn: s.heroCtaSecondaryTextEn,
           heroCtaSecondaryHref: s.heroCtaSecondaryHref,
+          youtubeUrl: s.youtubeUrl,
           heroFloatImage1: s.heroFloatImage1,
           heroFloatImage2: s.heroFloatImage2,
           topBannerImages: stringifyImageUrlArray(banner),
@@ -429,38 +430,22 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
           onChangeEn={(v) => patch("heroSloganEn", v)}
           multiline
         />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <BilingualField
-            label="Primary CTA text"
-            valueAr={s.heroCtaPrimaryText ?? ""}
-            valueEn={s.heroCtaPrimaryTextEn ?? ""}
-            onChangeAr={(v) => patch("heroCtaPrimaryText", v)}
-            onChangeEn={(v) => patch("heroCtaPrimaryTextEn", v)}
+        <p className="text-sm text-[var(--color-muted)]">
+          Hero buttons are Courses, Workshops, and Resources. They link to /courses, /workshops, and /resources.
+        </p>
+        <label className="block text-sm">
+          YouTube link
+          <input
+            type="url"
+            className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+            placeholder="https://www.youtube.com/@channel"
+            value={s.youtubeUrl ?? ""}
+            onChange={(e) => patch("youtubeUrl", e.target.value || null)}
           />
-          <label className="block text-sm">
-            Primary CTA link
-            <input
-              className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
-              value={s.heroCtaPrimaryHref ?? ""}
-              onChange={(e) => patch("heroCtaPrimaryHref", e.target.value)}
-            />
-          </label>
-          <BilingualField
-            label="Secondary CTA text"
-            valueAr={s.heroCtaSecondaryText ?? ""}
-            valueEn={s.heroCtaSecondaryTextEn ?? ""}
-            onChangeAr={(v) => patch("heroCtaSecondaryText", v)}
-            onChangeEn={(v) => patch("heroCtaSecondaryTextEn", v)}
-          />
-          <label className="block text-sm">
-            Secondary CTA link
-            <input
-              className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
-              value={s.heroCtaSecondaryHref ?? ""}
-              onChange={(e) => patch("heroCtaSecondaryHref", e.target.value)}
-            />
-          </label>
-        </div>
+          <span className="mt-1 block text-xs text-[var(--color-muted)]">
+            Shown in the site header. Leave empty to hide the YouTube link.
+          </span>
+        </label>
         <ImageMultiUpload
           label="Gallery images"
           hint="Up to 20 images used as decorative hero background. Stored on Cloudflare R2."
@@ -522,7 +507,7 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold">Packs promo</h3>
+        <h3 className="text-lg font-bold">Resources promo</h3>
         <BilingualField
           label="Title"
           valueAr={s.packsPromoTitle ?? ""}
@@ -713,7 +698,10 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-lg font-bold">Packs page</h3>
+        <h3 className="text-lg font-bold">Resources page</h3>
+        <p className="text-sm text-[var(--color-muted)]">
+          This is the public Resources page (the former Packs store) at /resources.
+        </p>
         <BilingualField
           label="Page title"
           valueAr={s.packsPageTitle ?? ""}
@@ -740,6 +728,9 @@ export function UrbnitHomepageSettingsForm({ initialSettings }: { initialSetting
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold">About page</h3>
+        <p className="text-sm text-[var(--color-muted)]">
+          This title and body are the public About page.
+        </p>
         <BilingualField
           label="Title"
           valueAr={s.aboutTitle ?? ""}

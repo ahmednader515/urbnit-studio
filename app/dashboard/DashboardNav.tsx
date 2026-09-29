@@ -112,6 +112,12 @@ export function DashboardNav({
           <NavLink href="/dashboard/courses/new" exact>
             {t("dashboardNav.createCourse", "Create course")}
           </NavLink>
+          <NavLink href="/dashboard/workshops">
+            {t("dashboardNav.workshops", "Workshops")}
+          </NavLink>
+          <NavLink href="/dashboard/portfolio">
+            {t("dashboardNav.portfolio", "Portfolio")}
+          </NavLink>
           <NavLink href="/dashboard/reviews">
             {t("dashboardNav.studentReviews", "Student reviews")}
           </NavLink>
@@ -124,7 +130,7 @@ export function DashboardNav({
           <NavLink href="/dashboard/teachers">{t("dashboardNav.multipleTeachers", "Multiple teachers")}</NavLink>
           <NavLink href="/dashboard/subscriptions">{t("dashboardNav.platformSubscriptions", "Platform subscriptions")}</NavLink>
           <NavLink href="/dashboard/subscription-students">{t("dashboardNav.subscribedStudents", "Subscribed students")}</NavLink>
-          <NavLink href="/dashboard/store">{t("dashboardNav.platformPacks", "Packs")}</NavLink>
+          <NavLink href="/dashboard/store">{t("dashboardNav.platformPacks", "Resources")}</NavLink>
         </>
       )}
       {(isAdmin || isAssistant) && (

@@ -247,7 +247,7 @@ export default async function DashboardPage() {
               <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
                 {t("dashboard.page.storePurchasesTitle", "My platform store purchases")}
               </h2>
-              <Link href="/packs" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
+              <Link href="/resources" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
                 {t("dashboard.page.goToStoreLink", "Go to store")}
               </Link>
             </div>
